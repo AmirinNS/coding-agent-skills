@@ -7,6 +7,7 @@ A collection of Claude Code skills and guidelines for disciplined feature develo
 ```
 coding-agent-skills/
 ├── CLAUDE.md                          # Coding behavior guidelines
+├── CLAUDE-template.md                 # Project-specific CLAUDE.md skeleton
 ├── skills/
 │   ├── plan-feature/SKILL.md             # Create implementation plans
 │   ├── plan-review/SKILL.md          # Review and iterate on plans
@@ -20,38 +21,61 @@ coding-agent-skills/
 
 ## Workflow
 
-The skills follow a linear development workflow:
+The skills follow the SDLC phases:
 
 ```mermaid
 flowchart TD
-    Start([New Feature Request]) --> PF[plan-feature]
-    PF --> PR{plan-review}
-    PR -->|Flaws found| PF
-    PR -->|Approved| Impl
+    Start([New Feature Request]) --> P
 
-    Impl{Implementation}
-    Impl -->|Backend| Code[CLAUDE.md + approved plan]
-    Impl -->|Frontend| FD[frontend-design]
-    Impl -->|Bootstrap| FBE[frontend-bootstrap-evolution]
-    Code --> IR{implementation-review}
+    subgraph P[1. Planning]
+        PF[plan-feature]
+    end
+
+    subgraph A[2. Analysis]
+        PR{plan-review}
+    end
+
+    PF --> PR
+    PR -->|Flaws found| PF
+    PR -->|Approved| D
+
+    subgraph D[3. Design]
+        Impl{What type?}
+        Impl -->|Backend| Code[CLAUDE.md + approved plan]
+        Impl -->|Frontend| FD[frontend-design]
+        Impl -->|Bootstrap| FBE[frontend-bootstrap-evolution]
+    end
+
+    subgraph I[4. Implementation]
+        IR{implementation-review}
+        Stage[git add]
+        CD[create-docs]
+        GC[generate-commit]
+        IR -->|Passed| Stage
+        Stage --> CD
+        CD --> GC
+    end
+
+    Code --> IR
     FD --> IR
     FBE --> IR
-
     IR -->|Critical issues| Code
     IR -->|Critical issues| FD
     IR -->|Critical issues| FBE
-    IR -->|Passed| Stage[git add]
-
-    Stage --> CD[create-docs]
-    CD --> GC[generate-commit]
     GC --> Done([Committed])
 
-    Done -.->|Bug reported| Bug([Bug / Maintenance])
-    Bug --> FB[fix-bug]
-    FB --> IR2{implementation-review}
-    IR2 -->|Critical issues| FB
-    IR2 -->|Passed| Stage2[git add]
-    Stage2 --> GC2[generate-commit]
+    subgraph M[5. Maintenance]
+        FB[fix-bug]
+        IR2{implementation-review}
+        Stage2[git add]
+        GC2[generate-commit]
+        FB --> IR2
+        IR2 -->|Critical issues| FB
+        IR2 -->|Passed| Stage2
+        Stage2 --> GC2
+    end
+
+    Done -.->|Bug reported| FB
     GC2 --> Fixed([Committed])
 
     style PF fill:#4a9eff,color:#fff
@@ -64,18 +88,20 @@ flowchart TD
     style FB fill:#ef4444,color:#fff
     style IR2 fill:#f59e0b,color:#fff
     style GC2 fill:#8b5cf6,color:#fff
+    style P fill:#e0f2fe,stroke:#4a9eff
+    style A fill:#fef3c7,stroke:#f59e0b
+    style D fill:#fce7f3,stroke:#ec4899
+    style I fill:#d1fae5,stroke:#10b981
+    style M fill:#fee2e2,stroke:#ef4444
 ```
 
-| Step | Skill | What it does |
-|------|-------|-------------|
-| 1. Plan | `plan-feature` | Creates a focused implementation plan in `plans/` |
-| 2. Review plan | `plan-review` | Reviews the plan for flaws, over-engineering, feasibility. Run multiple times — each pass logs changes to the plan file |
-| 3. Implement | *(guided by CLAUDE.md + the approved plan)* | |
-| 3a. Implement (frontend) | `frontend-design` | Implements frontend features with distinctive design quality. Reads the approved plan and review log before coding |
-| 3b. Implement (Bootstrap) | `frontend-bootstrap-evolution` | Implements frontend using Bootstrap 5 with heavily customized, "un-bootstrapped" aesthetics |
-| 4. Review implementation | `implementation-review` | Reviews code for bugs, security issues, plan deviations. Auto-fixes critical issues, reports the rest |
-| 5. Create docs | `create-docs` | Generates documentation from the plan and staged changes |
-| 6. Commit | `generate-commit` | Generates a conventional commit message from staged diff |
+| SDLC Phase | Skill | What it does |
+|------------|-------|-------------|
+| **1. Planning** | `plan-feature` | Creates a focused implementation plan in `plans/` |
+| **2. Analysis** | `plan-review` | Reviews the plan for flaws, over-engineering, feasibility. Run multiple times — each pass logs changes to the plan file |
+| **3. Design** | `frontend-design` / `frontend-bootstrap-evolution` | For frontend features only. Backend work follows CLAUDE.md guidelines directly |
+| **4. Implementation** | `implementation-review` → `create-docs` → `generate-commit` | Review code (2x), generate docs from staged changes, commit with conventional message |
+| **5. Maintenance** | `fix-bug` | Reproduce-first bug fixing. Skips phases 1-3 |
 
 ## CLAUDE.md
 
@@ -89,39 +115,66 @@ The `CLAUDE.md` file provides behavioral guidelines that apply across all steps:
 
 ## Installation
 
-Copy the skills you need into your project's `.claude/skills/` directory:
+### 1. Copy Skills
 
 ```bash
 # Copy all skills
 cp -r skills/* /path/to/your-project/.claude/skills/
 
-# Copy specific skills only
+# Or copy specific skills only
 cp -r skills/plan-feature /path/to/your-project/.claude/skills/
 cp -r skills/fix-bug /path/to/your-project/.claude/skills/
 ```
 
-### CLAUDE.md Setup
+### 2. Place Guidelines & Project Config
 
-Place the behavioral guidelines in `.claude/CLAUDE.md` — this keeps them separate from your project-specific `CLAUDE.md` at the root. Claude Code reads both files automatically.
+```bash
+# Behavioral guidelines → .claude/CLAUDE.md
+cp CLAUDE.md /path/to/your-project/.claude/CLAUDE.md
+
+# Project-specific config → root CLAUDE.md (fill in the template)
+cp CLAUDE-template.md /path/to/your-project/CLAUDE.md
+```
+
+### File Placement by Tool
+
+Different AI coding tools use different file names and locations. The content is the same — only the file name and path differ.
+
+#### Claude Code
+
+Reference: [claude.com/docs/en/memory](https://code.claude.com/docs/en/memory)
 
 ```
 your-project/
-├── CLAUDE.md                    # Project-specific (framework, commands, architecture)
+├── CLAUDE.md                    # Project-specific (from CLAUDE-template.md)
+├── CLAUDE.local.md              # Personal overrides (add to .gitignore)
 └── .claude/
-    ├── CLAUDE.md                # Behavioral guidelines (from coding-agent-skills)
+    ├── CLAUDE.md                # Behavioral guidelines (from CLAUDE.md)
     └── skills/                  # Skills copied here
 ```
 
-```bash
-# Install behavioral guidelines (won't conflict with project CLAUDE.md)
-cp CLAUDE.md /path/to/your-project/.claude/CLAUDE.md
+Claude Code reads all `CLAUDE.md` files walking up the directory tree. Both root and `.claude/CLAUDE.md` are loaded automatically. Use `CLAUDE.local.md` for personal preferences not shared with the team.
+
+User-level (all projects): `~/.claude/CLAUDE.md`
+
+#### OpenCode
+
+Reference: [opencode.ai/docs/rules](https://opencode.ai/docs/rules/)
+
+```
+your-project/
+├── AGENTS.md                    # Project-specific (from CLAUDE-template.md, renamed)
+└── .claude/
+    └── skills/                  # Skills copied here
 ```
 
-If your project doesn't have a root `CLAUDE.md`, you can copy directly to the root instead:
+OpenCode uses `AGENTS.md` as the primary file name. It falls back to `CLAUDE.md` if no `AGENTS.md` exists. If using both tools, keep `CLAUDE.md` — OpenCode will pick it up as fallback.
 
-```bash
-cp CLAUDE.md /path/to/your-project/CLAUDE.md
-```
+User-level (all projects): `~/.config/opencode/AGENTS.md`
+
+#### Other Tools
+
+For tools that support custom instruction files (Cursor, Windsurf, Codex, etc.), copy the behavioral guidelines and project config into their respective instruction file format. The content is tool-agnostic.
 
 ## Design Principles
 
