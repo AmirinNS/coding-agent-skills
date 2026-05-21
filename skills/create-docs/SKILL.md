@@ -87,11 +87,31 @@ After writing, re-read the staged diff and verify:
 - No documented behavior contradicts the actual code
 - Examples actually work with the implemented code
 
-## Step 5: Save and Report
+## Step 5: Absorb the Plan
+
+The `plans/` folder is a working queue — once a feature is documented, its plan has served its purpose. Absorb the plan's valuable context into the final doc, then clean up:
+
+1. **Merge plan context into the doc.** Add these sections to the documentation:
+
+```markdown
+## Design Decisions
+| Decision | Chosen | Alternatives Considered | Why |
+|----------|--------|------------------------|-----|
+(Pulled from the plan's Decisions Log)
+
+## Review History
+(Condensed summary from the plan's Review Log — key changes and reasoning, not the full iteration-by-iteration log)
+```
+
+2. **Leave the plan file in `plans/`.** Plans are gitignored and not committed — the user will clean them up manually when they're no longer needed. The doc is now the single source of truth for this feature.
+
+Omit "Design Decisions" if the plan had no decisions log. Omit "Review History" if there was no review log. Don't add empty sections.
+
+## Step 6: Save and Report
 
 1. Save docs to the location specified in the plan or project's docs directory.
 2. If the plan specified doc file paths, use those exactly.
-3. Present a summary of what was documented to the user.
+3. Present a summary to the user: what was documented and what was absorbed from the plan.
 
 ## Rules
 - Document what was built, not what was planned. Read the code.
@@ -102,3 +122,4 @@ After writing, re-read the staged diff and verify:
 - Don't document internal implementation details unless they affect usage.
 - Match the tone and style of existing docs in the project.
 - If existing docs need updating because of this feature, update them rather than creating duplicates.
+- **Plans are gitignored and not committed.** The doc is the only permanent record of design decisions and review history. Absorb everything valuable into the doc. Don't delete plan files — the user manages cleanup manually.

@@ -69,6 +69,11 @@ Step-by-step implementation:
 - Test type: <E2E / Integration / Unit>
 - Tests to run: ...
 - Tests to add: ...
+
+## Decisions Log
+| Decision | Chosen | Alternatives Considered | Why |
+|----------|--------|------------------------|-----|
+| [What was decided] | [What was picked] | [Other options] | [Reasoning] |
 ```
 
 ### Full Template (large changes)
@@ -123,6 +128,11 @@ Step-by-step implementation broken into milestones:
 ## Dependencies
 - Libraries to add/update: ...
 - External services: ...
+
+## Decisions Log
+| Decision | Chosen | Alternatives Considered | Why |
+|----------|--------|------------------------|-----|
+| [What was decided] | [What was picked] | [Other options] | [Reasoning] |
 ```
 
 ## Step 4: Save and Handoff
@@ -142,3 +152,5 @@ Step-by-step implementation broken into milestones:
 - Push back if the feature seems over-scoped. Suggest a smaller first version.
 - **Large change rule:** split large work into phased plans with clear milestones. Each phase should be independently shippable.
 - If existing code already solves part of the problem, say so — don't re-invent.
+- **When in doubt, ask.** If there are multiple viable approaches and you can't confidently determine the best one — or the number of reasonable choices is large enough that picking silently feels like a gamble — present the top options with tradeoffs and let the user decide before proceeding.
+- **Log every non-trivial choice in the Decisions Log.** Whenever you pick between alternatives — libraries, patterns, data models, API designs — record what was chosen, what was considered, and why. This lets the user revisit decisions later or pivot quickly if requirements change.

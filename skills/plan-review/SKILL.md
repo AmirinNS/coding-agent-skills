@@ -89,7 +89,8 @@ Analyze the plan for critical flaws. Be honest and direct. Check relevant catego
 For each critical flaw:
 1. **State the flaw clearly** (1-2 sentences)
 2. **Explain the impact** if unaddressed
-3. **Suggest a concrete fix or mitigation**
+3. **Apply the best fix directly to the plan.** Don't suggest — just fix it. Log what you changed and why in the review log.
+4. **Only ask the user** when there are multiple viable fixes with meaningfully different tradeoffs and no clear winner. Otherwise, pick the best option and move on.
 
 ## Step 5: Feasibility & Outcome Summary
 
@@ -124,17 +125,20 @@ If a review log already exists in the plan, read it first. On subsequent reviews
 - Focus on new issues, unresolved items from previous reviews, and whether fixes introduced new problems.
 - Update the log with the new iteration.
 
-## Step 7: Improvement Suggestions
+## Step 7: Apply Improvements
 
-Suggest 2-5 specific improvements. Each must be:
-- **Actionable**: Something the user can actually do
+Apply 2-5 high-impact improvements directly to the plan. Each must be:
 - **High-impact**: Addresses real risk or adds real value
-- **Concrete**: Not vague advice like "consider testing more"
+- **Concrete**: A specific change to the plan, not vague advice like "consider testing more"
 
-Good examples:
-- "Split this into two milestones: the data migration first, then the feature change"
-- "Add rate limiting before launch — without it, the endpoint is vulnerable to abuse"
-- "This plan introduces a service layer that isn't needed yet — call the DB directly like the existing endpoints do"
+For each improvement:
+- If there's a clear best option — apply it directly and log it. Don't ask.
+- If the tradeoffs are significant and the choice genuinely could go either way — present the options and ask.
+
+Good examples of auto-applied improvements:
+- Split a monolithic milestone into two independently shippable phases
+- Remove a premature service layer abstraction — call the DB directly like existing endpoints
+- Add rate limiting to an exposed endpoint
 
 ## Output Format
 
@@ -146,17 +150,18 @@ Good examples:
 ### Over-Engineering Concerns
 [Any scope or complexity issues, or "None — scope is appropriate"]
 
-### Critical Flaws
-1. **[Category]**: [Flaw description]
-   - **Impact**: ...
-   - **Fix**: ...
+### Critical Flaws (auto-fixed)
+1. **[Category]**: [Flaw description] — **Fixed:** [what was changed]
+
+### Needs Your Input (only if applicable)
+1. **[Issue]**: [Options with tradeoffs — pick one]
 
 ### Feasibility & Outcome
 [3-5 sentence summary of feasibility, likely outcome, and confidence level]
 
-### Suggested Improvements
-1. [Specific, actionable suggestion]
-2. [Specific, actionable suggestion]
+### Improvements Applied
+1. [What was changed and why]
+2. [What was changed and why]
 
 ### Review Log
 (Appended to plan file — see Review [N] entry)
@@ -170,3 +175,4 @@ Good examples:
 - Never approve a plan that has security vulnerabilities without flagging them explicitly.
 - Always check over-engineering first — the most common flaw is doing too much.
 - Verify assumptions against the codebase before calling them flaws.
+- **Default to action, not questions.** Auto-apply the best fix for flaws and improvements. Only ask the user when there are multiple viable approaches with meaningfully different tradeoffs and no clear winner. The goal is seamless iteration — minimize back-and-forth.

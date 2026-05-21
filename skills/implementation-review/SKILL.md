@@ -104,9 +104,9 @@ If no plan exists, skip this step.
 For each auto-fix:
 - Explain what was wrong
 - Show the change
-- Confirm the fix is correct
+- Log the alternatives considered and why this fix was chosen
 
-If a fix is complex, risky, or changes behavior, present it to the user first before applying.
+If there are multiple viable fixes with meaningfully different tradeoffs and no clear winner, present the options and let the user decide. Otherwise, pick the best option and apply it — don't ask.
 
 ## Step 6: Validate & Test
 
@@ -148,7 +148,12 @@ Report results:
 (Omit if no plan exists)
 
 ### Fixes Applied
-- **[File]**: [What was fixed and why]
+| File | Fix | Alternatives Considered | Why This Fix |
+|------|-----|------------------------|--------------|
+| [File:Line] | [What was changed] | [Other options] | [Reasoning] |
+
+### Needs Your Input (only if applicable)
+1. **[File:Line]**: [Options with tradeoffs — pick one]
 
 ### Issues Reported (not auto-fixed)
 - **[File:Line]**: [Description and suggested approach]
@@ -171,3 +176,5 @@ Report results:
 - Respect the codebase style. Match existing patterns and conventions.
 - If tests fail after your fixes, you must fix them or explain why they are wrong.
 - Don't add documentation, docstrings, or comments unless the user asks. A review is not a documentation pass.
+- **Default to action, not questions.** Auto-apply the best fix and log alternatives. Only ask the user when there are multiple viable approaches with meaningfully different tradeoffs and no clear winner. The goal is seamless iteration — minimize back-and-forth.
+- **Log every non-trivial fix decision.** When choosing between alternatives, record what was picked, what else was considered, and why — so the user can revisit or pivot later.
