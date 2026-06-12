@@ -16,97 +16,96 @@ The user provides a plan, design document, or specification. It may be:
 
 If the plan is not clearly specified, ask: "Which plan should I review?"
 
+## Step 0: Load Target Conventions
+
+Before any analysis, read `CLAUDE.md`, `README.md`, and (if present) `docs/` from the current working directory. If `CLAUDE.md` is missing, halt and ask the user before proceeding.
+
+If `CLAUDE.md` contradicts the plan being reviewed, surface the contradiction explicitly — flag it under "Critical Flaws" so it gets fixed before implementation, not after.
+
 ## Step 1: Read and Understand
 
-Read the plan thoroughly. Identify:
-- **Goal**: What is this plan trying to achieve?
-- **Approach**: How does it propose to achieve it?
-- **Scope**: What is included and what is explicitly out of scope?
-- **Dependencies**: What does it rely on (libraries, services, data, other features)?
-- **Risks**: What areas are complex, uncertain, or high-stakes?
-- **Constraints**: Time, budget, technology, team size, legacy code, etc.
+Read the plan. Identify: **goal**, **approach**, **scope** (in/out), **dependencies** (libs, services, data, other features), **risks** (complex/uncertain/high-stakes), **constraints** (time, tech, legacy).
 
 ## Step 2: Calibrate Review Depth
 
-Before analyzing, assess the plan's size and adjust your review accordingly:
+**Small** (new endpoint, UI tweak, extend existing pattern): check approach correctness, scope clarity, over-engineering. Skip ops/scalability/rollback unless data or shared infra is touched.
 
-**Small plan** (new endpoint, UI tweak, extend existing pattern):
-- Focus on: approach correctness, scope clarity, over-engineering
-- Skip: ops, scalability, rollback unless the change touches data or shared infrastructure
-
-**Large plan** (schema migration, new platform, architecture change, breaking changes):
-- Full review across all categories below
-
-Don't apply enterprise-grade scrutiny to a 2-hour task.
+**Large** (schema migration, new platform, architecture change, breaking changes): full review across all categories below.
 
 ## Step 3: Validate Against Codebase
 
-Before flagging flaws, verify the plan's assumptions against reality:
-- If the plan references files, modules, or functions — check they exist and work as assumed.
-- If the plan assumes a pattern or convention — confirm it matches the actual codebase.
-- If the plan claims something is missing — verify it's actually missing.
+Verify the plan's assumptions before flagging flaws:
+- Referenced files/modules/functions exist and behave as assumed.
+- Claimed patterns/conventions match the actual codebase.
+- Claimed-missing pieces are actually missing.
 
-Flag any assumptions that don't hold.
+Flag any assumption that doesn't hold.
 
 ## Step 4: Critical Flaw Analysis
 
-Analyze the plan for critical flaws. Be honest and direct. Check relevant categories based on the review depth from Step 2:
+Check the categories relevant to the review depth from Step 2. Be direct.
 
-### Over-Engineering Check
-- Is the plan doing more than what was asked?
-- Could this be shipped smaller or simpler?
-- Are there abstractions, patterns, or infrastructure being introduced prematurely?
-- Is there unnecessary "flexibility" or "configurability"?
+### Over-Engineering (always check first — most common flaw)
+Doing more than asked; could ship smaller/simpler; premature abstractions, patterns, or infra; unrequested "flexibility" or "configurability".
 
 ### Architecture & Design
-- Tight coupling where loose coupling is needed
-- Data model flaws (inconsistencies, inefficiencies, missing constraints)
-- Incorrect abstraction layers
-- Single points of failure (for large plans only)
+Tight coupling where loose is needed; data model flaws (inconsistencies, missing constraints); wrong abstraction layers; single points of failure (large only).
 
 ### Security
-- Missing authentication or authorization
-- Exposure of sensitive data
-- Injection risks (SQL, command, template)
-- Missing input validation or sanitization
+Missing authn/authz; sensitive data exposure; injection (SQL/command/template); missing input validation.
 
 ### Feasibility & Risk
-- Unrealistic assumptions about dependencies or timelines
-- Technical debt introduced intentionally without justification
-- Missing error handling for likely failure modes
-- Incomplete edge case coverage
+Unrealistic dependency or timeline assumptions; unjustified intentional tech debt; missing error handling for likely failure modes; incomplete edge cases.
 
-### Integration & Operations (large plans only)
-- Backward compatibility breaks without migration plan
-- Missing rollback strategy for data/schema changes
-- Deployment complexity not addressed
+### Integration & Operations (large only)
+Backward-compat breaks without migration; missing rollback for data/schema; deployment complexity unaddressed.
 
 ### Scope & Requirements
-- Ambiguous boundaries leading to scope creep
-- Incomplete API contracts or interfaces
-- Missing data migration or state transition plan
+Ambiguous boundaries → scope creep; incomplete API contracts; missing data migration / state transition plan.
 
 For each critical flaw:
-1. **State the flaw clearly** (1-2 sentences)
-2. **Explain the impact** if unaddressed
-3. **Apply the best fix directly to the plan.** Don't suggest — just fix it. Log what you changed and why in the review log.
-4. **Only ask the user** when there are multiple viable fixes with meaningfully different tradeoffs and no clear winner. Otherwise, pick the best option and move on.
+1. State the flaw (1-2 sentences) and its impact.
+2. Apply the best fix directly to the plan — don't suggest, just fix. Log it.
+3. Only ask the user when multiple viable fixes have meaningfully different tradeoffs and no clear winner.
 
-## Step 5: Feasibility & Outcome Summary
+## Step 5: Apply Improvements
 
-Summarize in 3-5 sentences:
-- **Feasibility**: Is this plan realistically implementable? What are the biggest risks?
-- **Outcome**: If executed as written, what will the likely result be?
-- **Confidence**: Rate using these definitions:
-  - **High**: Approach is proven, dependencies are known, scope is clear
-  - **Medium**: Some unknowns or assumptions that need validation, but core approach is sound
-  - **Low**: Significant unknowns, unvalidated assumptions, or unclear scope that could derail implementation
+Apply 2-5 high-impact, concrete improvements directly. Discovered either in the initial pass or in recheck passes.
 
-## Step 6: Log Changes
+- Clear best option → apply, log, move on.
+- Genuine tradeoff with no clear winner → present options, ask.
 
-After each review, append a changes log entry to the plan file. This tracks what was flagged and resolved across review iterations so future reviews don't repeat themselves.
+Examples: split a monolithic milestone into shippable phases; remove a premature service layer; add rate limiting to an exposed endpoint.
 
-Append to the bottom of the plan file:
+## Step 6: Self-Correction Loop (Autonomous Iteration)
+
+After Steps 4–5 modify the plan, re-read it and run a **recheck pass**:
+1. Did any fix introduce a new critical flaw or over-engineering?
+2. Did resolving one issue reveal another?
+3. Can previously unresolved items now be addressed?
+4. Are cumulative Review Log changes coherent?
+
+**Loop rules:**
+- Zero new flaws + zero new improvements → stop. Plan is stable.
+- New issues found → apply, append a new Review Log entry, re-read, recheck.
+- **Max 3 total passes** (initial + 2 rechecks). Stop at 3; note remaining as "Still open after max iterations."
+- No user prompts mid-loop. Only escalate to "Needs Your Input" if a tradeoff truly has no clear winner.
+
+After the loop, consolidate Review Log entries under a single `## Review Log` section, numbered Review 1, 2, 3.
+
+## Step 7: Feasibility & Outcome Summary
+
+3-5 sentences covering:
+- **Feasibility**: realistically implementable? biggest risks?
+- **Outcome**: likely result if executed as written?
+- **Confidence**:
+  - **High** — approach proven, dependencies known, scope clear
+  - **Medium** — some unknowns/assumptions to validate, but core sound
+  - **Low** — significant unknowns or unclear scope that could derail
+
+## Step 8: Log Changes
+
+Append (or overwrite if one already exists) the consolidated `## Review Log` to the plan file. Tracks what was flagged and resolved so future reviews don't repeat themselves.
 
 ```markdown
 ## Review Log
@@ -114,65 +113,46 @@ Append to the bottom of the plan file:
 ### Review [N] — [Date]
 **Flaws found:** [count]
 **Changes made:**
-- [What was changed] — **Reason:** [Why this change was necessary]
-- [What was changed] — **Reason:** [Why this change was necessary]
+- [What was changed] — **Reason:** [Why]
 **Still open:**
-- [Unresolved issue] — **Reason not resolved:** [Why it's still open]
+- [Unresolved issue] — **Reason not resolved:** [Why]
 ```
 
-If a review log already exists in the plan, read it first. On subsequent reviews:
-- Don't re-flag issues already logged as resolved.
-- Focus on new issues, unresolved items from previous reviews, and whether fixes introduced new problems.
-- Update the log with the new iteration.
-
-## Step 7: Apply Improvements
-
-Apply 2-5 high-impact improvements directly to the plan. Each must be:
-- **High-impact**: Addresses real risk or adds real value
-- **Concrete**: A specific change to the plan, not vague advice like "consider testing more"
-
-For each improvement:
-- If there's a clear best option — apply it directly and log it. Don't ask.
-- If the tradeoffs are significant and the choice genuinely could go either way — present the options and ask.
-
-Good examples of auto-applied improvements:
-- Split a monolithic milestone into two independently shippable phases
-- Remove a premature service layer abstraction — call the DB directly like existing endpoints
-- Add rate limiting to an exposed endpoint
+On subsequent reviews: read the existing log first; don't re-flag resolved items; focus on new issues, still-open items, and whether prior fixes introduced new problems.
 
 ## Output Format
 
 ```
-## Plan Review: [Plan Name / Topic]
+## Plan Review: [Plan Name]
 
 ### Review Depth: [Small / Large]
 
 ### Over-Engineering Concerns
-[Any scope or complexity issues, or "None — scope is appropriate"]
+[Issues, or "None — scope is appropriate"]
+
+### Iteration Summary
+- **Passes performed:** [1/2/3]
+- **Cumulative changes:** [count]
+- **Stability:** [Stable / Stopped at max iterations]
 
 ### Critical Flaws (auto-fixed)
-1. **[Category]**: [Flaw description] — **Fixed:** [what was changed]
+1. **[Category]** (Pass [N]): [Flaw] — **Fixed:** [What was changed]
 
 ### Needs Your Input (only if applicable)
 1. **[Issue]**: [Options with tradeoffs — pick one]
 
 ### Feasibility & Outcome
-[3-5 sentence summary of feasibility, likely outcome, and confidence level]
+[3-5 sentences reflecting the final state]
 
 ### Improvements Applied
 1. [What was changed and why]
-2. [What was changed and why]
 
 ### Review Log
-(Appended to plan file — see Review [N] entry)
+(Appended to plan file — Review 1–N consolidated)
 ```
 
 ## Rules
-- Be direct, not polite. The user asked for a critical review.
-- Be specific. Vague feedback is useless.
-- Distinguish critical flaws from minor concerns. Flag critical issues prominently.
-- If context is missing, ask focused questions rather than guessing.
-- Never approve a plan that has security vulnerabilities without flagging them explicitly.
-- Always check over-engineering first — the most common flaw is doing too much.
+- Direct, not polite. Specific, not vague. "Vague" = useless.
+- Security flaws are always called out — never silently approved.
 - Verify assumptions against the codebase before calling them flaws.
-- **Default to action, not questions.** Auto-apply the best fix for flaws and improvements. Only ask the user when there are multiple viable approaches with meaningfully different tradeoffs and no clear winner. The goal is seamless iteration — minimize back-and-forth.
+- **Default to action, not questions.** Auto-apply the best fix; only ask when tradeoffs are genuinely close.

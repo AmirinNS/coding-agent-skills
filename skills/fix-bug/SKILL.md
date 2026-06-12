@@ -55,10 +55,22 @@ If the fix is non-obvious or could change behavior beyond the bug, explain the t
 
 ## Step 4: Verify
 
+**Iron Law:** No "fixed!" claim without fresh verification evidence in this message. Run the command; read the output; then claim the result.
+
 Confirm the fix works:
 1. Run the reproduction from Step 1 — it should pass now.
 2. Run related tests — nothing else should break.
 3. If no test existed, write one that catches this specific bug so it doesn't regress.
+
+When you add a regression test, prove it actually catches the bug — don't trust that "it passes after the fix" means "it would have failed before." Run the **red → green** cycle:
+
+1. Revert your fix (`git stash` or comment out the patch).
+2. Run the new test — it MUST fail with the expected symptom. If it passes, the test doesn't reproduce the bug; rewrite the test before re-applying the fix.
+3. Restore the fix.
+4. Run the new test again — it MUST pass.
+5. Run the broader suite — nothing else breaks.
+
+A regression test that has never been red is not a regression test.
 
 Report results:
 ```

@@ -16,18 +16,33 @@ The user asks to document a completed feature. They may provide:
 
 If unclear, ask: "Which feature should I document?"
 
+## Step 0: Load Target Conventions
+
+Before any analysis or writing, read `CLAUDE.md`, `README.md`, and (if present) `docs/` from the current working directory. If `CLAUDE.md` is missing, halt and ask the user before proceeding.
+
+If `CLAUDE.md` contradicts the plan being documented, surface the contradiction to the user. Do not silently document something the project's own conventions reject.
+
 ## Step 1: Gather Context
 
-First, check if the user has staged changes (`git diff --cached`). If there are no staged changes, **stop and remind the user to stage their changes first** before generating docs. Docs should be based on the actual staged diff, not unstaged or uncommitted work that may still change.
+### Step 1a: Resolve the Change Set
 
-Once staged changes are confirmed, read these sources:
+Documentation should cover all the work delivered for this feature — which may have been committed across multiple milestones, not just left in the staging area. Resolve the change set as follows:
+
+1. **Detect base ref.** Try in order: `git rev-parse --verify main` → `git rev-parse --verify master` → `git symbolic-ref refs/remotes/origin/HEAD`. The first that succeeds is the base ref. If none succeed, fall back to staged-only (see step 3).
+2. **Compute the committed range.** `merge_base = git merge-base HEAD <base_ref>`. If `merge_base == HEAD`, there's no committed divergence — fall back to staged-only. Otherwise the committed delta is `git diff <merge_base>..HEAD`.
+3. **Build the full change set.** Union of `git diff <merge_base>..HEAD` (committed) AND `git diff --cached` (staged). Both feed documentation.
+4. **Empty change set rule.** If BOTH the committed range and the staged delta are empty, **stop and remind the user to commit or stage their changes first** — there is nothing to document.
+
+State which mode you're using up front: "Documenting committed range `abc1234..HEAD` plus staged changes" or "Documenting staged changes only (no base ref divergence)."
+
+### Step 1b: Read These Sources
 
 1. **The plan file** (in `plans/`) — what was intended, including the review log showing how the plan evolved. This is your primary reference for understanding the feature's goal, scope, and decisions made during review.
-2. **Git staged changes** (`git diff --cached`) — the actual code diff. This is the source of truth for what was built.
-3. **The implementation files** — read the full files touched in the staged diff for context beyond the diff itself.
+2. **The change-set diff** (from Step 1a) — the actual code delta. This is the source of truth for what was built.
+3. **The implementation files** — read the full files touched in the diff for context beyond the diff itself.
 4. **The tests** — understand what's tested and how.
 
-The plan tells you *why* and *what was intended*. The staged diff tells you *what was actually built*. When they differ, document what was built, but note significant deviations.
+The plan tells you *why* and *what was intended*. The diff tells you *what was actually built*. When they differ, document what was built, but note significant deviations.
 
 ## Step 2: Determine Doc Scope
 
@@ -82,7 +97,7 @@ Adapt the template to fit the feature. Omit sections that don't apply. Add secti
 
 ## Step 4: Verify
 
-After writing, re-read the staged diff and verify:
+After writing, re-read the change-set diff (from Step 1a) and verify:
 - Every user-facing change is documented (new commands, endpoints, UI flows, config)
 - No documented behavior contradicts the actual code
 - Examples actually work with the implemented code

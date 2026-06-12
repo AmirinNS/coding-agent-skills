@@ -16,6 +16,10 @@ The user describes a feature, enhancement, or change they want to build. It may 
 
 If the feature is unclear, ask: "What exactly should this feature do?"
 
+## Step 0: Load Target Conventions
+
+Before any analysis, read `CLAUDE.md`, `README.md`, and (if present) `docs/` from the current working directory. If `CLAUDE.md` is missing, halt and ask the user before proceeding. The plan you write must align with the project's stated conventions, not generic best practices.
+
 ## Step 1: Understand the Codebase
 
 Before writing the plan, understand what exists:
@@ -23,16 +27,27 @@ Before writing the plan, understand what exists:
 - Identify what already exists that can be reused or extended.
 - Don't assume — verify by reading the code.
 
+## Step 1.5: Scope Check
+
+If the feature spans multiple independent subsystems (e.g., new schema + new API + new frontend feature + new background job), do NOT write one giant plan. Suggest breaking it into separate, independently-shippable plans — one per subsystem. Each plan should produce working, testable software on its own.
+
+If the user pushes back ("just plan all of it"), make it phased: each phase is a complete subsystem that ships independently. Phases are not "checkpoints in a long march" — they are independent slices.
+
 ## Step 2: Size the Change
 
-Determine if this is a **small** or **large** change:
+Classify the change as **small**, **medium**, or **large**:
 
-**Small** (new endpoint, UI tweak, add a scraper, extend existing pattern):
-- Use the lightweight template below.
+**Small** — 1–3 milestones, narrow scope (new endpoint, UI tweak, add a scraper, extend existing pattern):
+- Use the **Lightweight Template** below.
 - Skip rollback, migration, and stakeholder sections.
 
-**Large** (schema migration, new platform/integration, architecture change, breaking changes):
-- Use the full template below.
+**Medium** — 4–7 milestones, single subsystem with non-trivial scope:
+- Use the **Full Template** below.
+- May omit rollback if the change is purely additive.
+
+**Large** — ≥8 milestones OR explicit multi-area scope (schema migration, new platform/integration, architecture change, breaking changes):
+- Use the **Full Template** below with full phasing.
+- Group milestones under phase headings (`### Phase A — …`). Each phase must be independently shippable.
 - Include rollback and migration sections.
 
 If unsure, default to small. The user can ask for more detail.
@@ -134,6 +149,22 @@ Step-by-step implementation broken into milestones:
 |----------|--------|------------------------|-----|
 | [What was decided] | [What was picked] | [Other options] | [Reasoning] |
 ```
+
+## Step 3.5: Task Granularity Rules
+
+Every step in "Approach" should be one concrete action a developer can do in ~2–5 minutes. Good steps name a file, a function, or a command. Bad steps describe intent.
+
+- ✅ "Write a failing test in `tests/test_email.py::test_invalid_address_rejected` — assert `send(addr='bad')` raises `ValueError`."
+- ✅ "Run `pytest tests/test_email.py -v` — expect FAIL: `ValueError not raised`."
+- ✅ "Add validator in `modules/email.py` — raise `ValueError` when `'@'` not in addr."
+- ✅ "Run the same test — expect PASS."
+- ✅ "Commit: `feat(email): reject invalid addresses`."
+- ❌ "Add email validation."
+- ❌ "Handle edge cases."
+- ❌ "Write tests for the above."
+- ❌ "TODO: fill in details."
+
+For test-driven steps in the Full Template, follow red → green → commit cadence. Skip the cadence for trivial template/CSS edits where TDD doesn't apply, but never skip explicit `Verify:` checks.
 
 ## Step 4: Save and Handoff
 

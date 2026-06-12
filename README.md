@@ -115,7 +115,29 @@ The `CLAUDE.md` file provides behavioral guidelines that apply across all steps:
 
 ## Installation
 
-### 1. Copy Skills
+Pick the instructions for your tool:
+
+### pi
+
+```bash
+# 1. Global behavioral guidelines (applied to every project)
+mkdir -p ~/.pi/agent
+cp CLAUDE.md ~/.pi/agent/AGENTS.md
+
+# 2. Global skills (available in every project)
+mkdir -p ~/.pi/agent/skills
+for dir in skills/*/; do ln -s "$(realpath "$dir")" ~/.pi/agent/skills/; done
+
+# 3. Per-project config (fill in the template)
+cp CLAUDE-template.md /path/to/your-project/CLAUDE.md
+```
+
+Skills auto-discover at next pi startup. Or symlink manually:
+- Context file: `~/.pi/agent/AGENTS.md`
+- Skills: `~/.pi/agent/skills/<skill-name>/`
+- Project skills: `.pi/skills/<skill-name>/`
+
+### Claude Code
 
 ```bash
 # Copy all skills
@@ -124,11 +146,7 @@ cp -r skills/* /path/to/your-project/.claude/skills/
 # Or copy specific skills only
 cp -r skills/plan-feature /path/to/your-project/.claude/skills/
 cp -r skills/fix-bug /path/to/your-project/.claude/skills/
-```
 
-### 2. Place Guidelines & Project Config
-
-```bash
 # Behavioral guidelines → .claude/CLAUDE.md
 cp CLAUDE.md /path/to/your-project/.claude/CLAUDE.md
 
@@ -139,6 +157,48 @@ cp CLAUDE-template.md /path/to/your-project/CLAUDE.md
 ### File Placement by Tool
 
 Different AI coding tools use different file names and locations. The content is the same — only the file name and path differ.
+
+#### pi
+
+Reference: [Pi docs](https://github.com/badlogic/pi-skills)
+
+```
+your-project/
+├── CLAUDE.md                    # Project-specific (from CLAUDE-template.md)
+└── .pi/
+    └── skills/                  # Skills copied or symlinked here
+```
+
+pi loads **context files** (`CLAUDE.md` or `AGENTS.md`) from the current directory and walks up the tree. For global instructions that apply to every project:
+
+```bash
+# Global behavioral guidelines (~/.pi/agent/AGENTS.md)
+mkdir -p ~/.pi/agent
+cp CLAUDE.md ~/.pi/agent/AGENTS.md
+
+# Global skills (~/.pi/agent/skills/)
+mkdir -p ~/.pi/agent/skills
+cp -r skills/* ~/.pi/agent/skills/
+# Or symlink to keep them in sync:
+# ln -s /absolute/path/to/coding-agent-skills/skills/* ~/.pi/agent/skills/
+```
+
+Project skills are discovered from `.pi/skills/` (and `.agents/skills/`) in the current directory and ancestor directories. pi also supports loading skills from other tools:
+
+```json
+// ~/.pi/settings.json
+{
+  "skills": ["~/.claude/skills", "~/.codex/skills"]
+}
+```
+
+| What | pi Location | Notes |
+|------|-------------|-------|
+| Global instructions | `~/.pi/agent/AGENTS.md` | Also accepts `CLAUDE.md` |
+| Project instructions | `CLAUDE.md` / `AGENTS.md` in cwd & ancestors | Auto-discovered |
+| Global skills | `~/.pi/agent/skills/` or `~/.agents/skills/` | Recursively discovers `SKILL.md` directories |
+| Project skills | `.pi/skills/` or `.agents/skills/` | Auto-discovered after project trust |
+| One-off skill | `pi --skill /path/to/skill` | CLI flag, additive |
 
 #### Claude Code
 
