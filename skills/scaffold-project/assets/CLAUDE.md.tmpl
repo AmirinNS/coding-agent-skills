@@ -1,0 +1,49 @@
+# CLAUDE.md — __PROJECT_NAME__
+
+__DESCRIPTION__
+
+## Stack
+
+- **Backend:** Flask (`__MODULE_NAME__.py` entrypoint, thin routes)
+- **Database:** MongoDB via PyMongo — direct driver calls, **no ORM**
+- **Frontend:** Jinja2 templates + Bootstrap 5 (CDN) + vanilla JS
+
+## Virtual environment (mandatory)
+
+Never use system python/pip. Always:
+
+    /Users/amirinns/PythonEnv/__MODULE_NAME__/bin/python <script>
+    /Users/amirinns/PythonEnv/__MODULE_NAME__/bin/pip install <package>
+
+## Architecture rules
+
+- Functional only. No classes for business logic or views.
+- Business logic lives in `modules/` as pure functions that take `db` explicitly.
+- Route handlers stay thin: parse request → call a `modules/` function → render/return.
+- Shared helpers and config live in `sources/`.
+- Shared page chrome (navbar, footer) lives in `templates/_navbar.html` / `templates/_footer.html`, pulled in with `{% include %}`.
+- Baseline SEO lives in `base.html` (meta/OG/Twitter/canonical) + `sources/seo.py` (defaults, `canonical_url()`) + `/robots.txt` and `/sitemap.xml` routes. Override per page via `{% block title %}` / `{% block meta_description %}`. JSON-LD and dynamic sitemaps come from the `add-capability` skill (seo).
+- All imports at the top of the file. Never import inside a function.
+- 4-space indentation.
+- If you add a Python dependency, update `requirements.txt` in the same change.
+- Stack changes (different framework/DB) require explicit user approval.
+
+## Run modes
+
+`APP_ENV` (in `.env`) selects the mode. One mode-aware entrypoint:
+
+- **development** (default) — native Flask server, debug on
+- **testing** — native Flask server, debug on
+- **production** — waitress WSGI server, debug off
+
+The native Flask server is dev/testing only; production is served by waitress (`sources/config.py` sets `IS_PRODUCTION`/`DEBUG`, the entrypoint picks the server). The app and MongoDB are assumed co-located (same host); set `MONGO_URI` per environment in `.env` (testing may point at a remote/shared DB) — never hardcode it.
+
+    # development
+    /Users/amirinns/PythonEnv/__MODULE_NAME__/bin/python __MODULE_NAME__.py
+    # production (waitress)
+    APP_ENV=production /Users/amirinns/PythonEnv/__MODULE_NAME__/bin/python __MODULE_NAME__.py
+    # http://localhost:5000
+
+## Plans
+
+Feature plans go in `plans/` as kebab-case markdown.

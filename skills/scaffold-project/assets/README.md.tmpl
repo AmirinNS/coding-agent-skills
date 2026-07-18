@@ -1,0 +1,62 @@
+# __PROJECT_NAME__
+
+__DESCRIPTION__
+
+## Stack
+
+- Flask (Python) — thin routes, functional service layer
+- MongoDB via PyMongo (no ORM)
+- Bootstrap 5 (CDN) + Jinja2 templates + vanilla JS
+
+## Setup
+
+```bash
+# 1. Create the dedicated virtualenv
+python3 -m venv /Users/amirinns/PythonEnv/__MODULE_NAME__
+
+# 2. Install dependencies
+/Users/amirinns/PythonEnv/__MODULE_NAME__/bin/pip install -r requirements.txt
+
+# 3. Configure environment
+cp .env.example .env   # then edit APP_ENV / MONGO_URI / DB_NAME / SECRET_KEY
+
+# 4. Run
+/Users/amirinns/PythonEnv/__MODULE_NAME__/bin/python __MODULE_NAME__.py
+# http://localhost:5000
+```
+
+## Run modes
+
+Set `APP_ENV` in `.env` (or inline). One entrypoint, mode-aware:
+
+| `APP_ENV` | Server | Debug |
+|-----------|--------|-------|
+| `development` (default) | native Flask | on |
+| `testing` | native Flask | on |
+| `production` | waitress (WSGI) | off |
+
+```bash
+# development (default)
+/Users/amirinns/PythonEnv/__MODULE_NAME__/bin/python __MODULE_NAME__.py
+
+# testing
+APP_ENV=testing /Users/amirinns/PythonEnv/__MODULE_NAME__/bin/python __MODULE_NAME__.py
+
+# production — served by waitress, debug off
+APP_ENV=production /Users/amirinns/PythonEnv/__MODULE_NAME__/bin/python __MODULE_NAME__.py
+```
+
+The native Flask server is for development/testing only; production is served by waitress. The app and MongoDB are assumed co-located (same host); set `MONGO_URI` per environment in `.env` (testing may point at a remote/shared DB).
+
+## Layout
+
+- `__MODULE_NAME__.py` — Flask entrypoint (routes only)
+- `modules/` — business logic (pure functions, direct PyMongo)
+- `sources/` — config and shared helpers (`config.py`, `functions.py`, `seo.py`)
+- `templates/` — Jinja2 templates (`base.html` + `_navbar.html` / `_footer.html` partials)
+- `static/` — CSS / JS / images
+- `plans/` — feature plans (kebab-case markdown)
+
+## SEO
+
+Baseline SEO is built in: `base.html` sets meta description, Open Graph, Twitter card, and canonical tags. Override per page with `{% block title %}` and `{% block meta_description %}`. Site-wide defaults come from `SITE_NAME` / `SITE_URL` in `.env` and `META_*` in `sources/seo.py`. Drop an OG image at `static/img/og-default.png`. `/robots.txt` and `/sitemap.xml` are served by the app (the sitemap is a minimal static list — extend it as pages grow).

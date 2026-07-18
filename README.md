@@ -9,6 +9,15 @@ coding-agent-skills/
 ├── CLAUDE.md                          # Coding behavior guidelines
 ├── CLAUDE-template.md                 # Project-specific CLAUDE.md skeleton
 ├── skills/
+│   ├── scaffold-project/              # Scaffold a new Flask + Bootstrap 5 + MongoDB project
+│   │   ├── SKILL.md                   #   (assets/ = canonical starter files, scaffold.sh = assembler)
+│   │   ├── scaffold.sh
+│   │   └── assets/
+│   ├── convert-to-house-style/SKILL.md # Migrate an existing project (reuses scaffold-project/assets)
+│   ├── add-capability/                # Bolt a house-style capability onto a project (dispatcher)
+│   │   ├── SKILL.md                   #   routes by name: auth · seo · storage · i18n · payment
+│   │   └── capabilities/             #   one instruction file per capability
+│   │       ├── auth.md  seo.md  storage.md  i18n.md  payment.md
 │   ├── plan-feature/SKILL.md             # Create implementation plans
 │   ├── plan-review/SKILL.md          # Review and iterate on plans
 │   ├── implementation-review/SKILL.md # Review code for bugs and flaws
