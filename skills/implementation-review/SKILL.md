@@ -83,6 +83,7 @@ Run validation using the project's actual tools. Read `package.json`, `Makefile`
 
 - **Tests**: run the relevant suite; check coverage for new code; flag missing tests on new critical logic; verify edge cases.
 - **Runtime** (if applicable): run the code; check for runtime errors.
+- **Working tree** (if you applied fixes in Step 5): run `git status --porcelain` and read it. Every changed file should be one the review intended to touch, and no scratch or temp files should be left behind. A review that quietly widens the diff is a review that failed.
 
 Report:
 ```

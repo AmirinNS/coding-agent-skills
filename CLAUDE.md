@@ -61,6 +61,8 @@ When your changes create orphans:
 
 The test: Every changed line should trace directly to the user's request.
 
+Before declaring done, run `git status --porcelain` and read it. Every file listed should be one you meant to touch, and no scratch or temp files should be left behind. Asserting "no unrelated changes" without looking is not a check.
+
 ## 5. Goal-Driven Execution
 
 **Define success criteria. Loop until verified.**
@@ -78,6 +80,16 @@ For multi-step tasks, state a brief plan:
 ```
 
 Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
+
+### Verification discipline
+
+Your first solution is a hypothesis. Only the real output of a command you actually ran proves anything — "looks right" is not proof.
+
+- Never report or reason from output you didn't read. If a step depends on a result, run it and read what it actually printed.
+- **Fail first.** Before fixing a bug, run the reproduction and watch it fail. A check that never failed proves nothing about the fix.
+- **Don't invent flags, APIs, or filenames.** Confirm one exists (`--help`, a quick import, `ls`) before relying on it. On "unknown option" or "not found", read what *is* available — don't guess the same shape again.
+- **Same approach fails twice → switch approaches.** Two failures is the signal, not the fifth.
+- For a computed answer, derive it a second, independent way before reporting it.
 
 ---
 

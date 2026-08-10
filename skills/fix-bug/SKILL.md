@@ -72,12 +72,15 @@ When you add a regression test, prove it actually catches the bug — don't trus
 
 A regression test that has never been red is not a regression test.
 
+Then confirm you left nothing behind: run `git status --porcelain` and read it. Any stash from the red→green cycle must be restored, and scratch reproduction scripts must be deleted or promoted into the test suite — never left loose in the tree.
+
 Report results:
 ```
 ### Verification
 - Reproduction: [Passes / Still failing]
 - Related tests: [All pass / Failures found]
 - Regression test added: [Yes — file:location / No — reason]
+- Working tree: [Only intended files changed / Leftovers found]
 ```
 
 ## Output Format
@@ -95,6 +98,7 @@ Report results:
 - Reproduction: [Passes / Still failing]
 - Related tests: [All pass / Failures found]
 - Regression test added: [Yes / No]
+- Working tree: [Only intended files changed]
 ```
 
 ## Rules
@@ -104,3 +108,5 @@ Report results:
 - If the fix reveals a deeper issue, fix the reported bug first, then mention the deeper issue separately.
 - If you can't find the root cause, say so. Don't apply speculative fixes.
 - Always verify. Don't assume your fix works — run it.
+- **Don't invent flags, APIs, or filenames.** Confirm one exists (`--help`, a quick import, `ls`) before relying on it. On "unknown option" or "not found", read what *is* available — don't guess the same shape again.
+- **Same approach fails twice → switch approaches.** Two failed attempts at the same diagnosis is the signal to change tactic, not to try a third variation of it.
