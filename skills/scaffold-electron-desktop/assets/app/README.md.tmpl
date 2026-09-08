@@ -1,0 +1,62 @@
+# __PROJECT_NAME__
+
+__DESCRIPTION__
+
+An Electron + Vite + React 19 desktop app. Standard electron-vite layout;
+all logic lives in the UI-free `src/main/core/` boundary.
+
+## Install
+
+```bash
+npm install          # postinstall: rebuild natives for Electron
+npm run rebuild:node # rebuild for Node before running tests
+```
+
+## Develop
+
+```bash
+npm run dev          # electron-vite dev
+```
+
+Editing `src/main/**` rebuilds and restarts the main process. Editing
+`src/renderer/**` hot-reloads.
+
+## Test and check
+
+```bash
+npm test             # vitest
+npm run lint
+npm run typecheck
+```
+
+## Package
+
+```bash
+npm run rebuild      # Electron-ABI native modules
+npm run dist:mac     # or dist:win / dist:linux
+```
+
+Installers land in `release/`.
+
+## Layout
+
+```
+src/main/             Electron main process entry.
+  index.ts            Window lifecycle; calls configureAppHome(userData).
+  ipc.ts              Thin IPC handlers, one ipcMain.handle per channel.
+  core/               UI-free logic. Knows nothing about Electron or React.
+    index.ts          The public surface. The shell imports only from here.
+    events.ts         Event vocabulary that crosses the core → UI boundary.
+    bus.ts            JobEventBus — the only channel out of core.
+    jobs/             Long-running work. Takes emit + AbortSignal.
+    store/            SQLite (better-sqlite3): db, schema, runs.
+src/preload/          contextBridge surface. Type imports of core only.
+src/renderer/         React 19 UI (index.html + src/).
+tests/                Job behaviour, boundary guard, surface canary, IPC contract.
+scripts/              Native module rebuild for Electron / for Node.
+```
+
+State lives in the app's `userData` dir (macOS:
+`~/Library/Application Support/__PROJECT_NAME__/`). Set `__ENV_PREFIX___HOME`
+to move it, or `__ENV_PREFIX___TEST_DB` to point the SQLite file elsewhere in
+tests.

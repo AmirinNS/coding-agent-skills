@@ -1,0 +1,81 @@
+# CLAUDE.md
+
+Guidance for AI coding agents working in __PROJECT_NAME__.
+
+## What this project is
+
+__DESCRIPTION__
+
+An Electron + Vite + React 19 app on the standard electron-vite single-app
+layout (`src/main`, `src/preload`, `src/renderer`). All logic lives in
+`src/main/core/`, a UI-free boundary enforced by tests, and the Electron
+shell around it renders what core reports.
+
+## Hard rules
+
+**ESM import-path rule.** The app is `"type": "module"` with
+`module: NodeNext`. Every intra-project import MUST carry a `.js` extension
+even when the source file is `.ts` / `.tsx` — e.g.
+`import { runExampleJob } from "./jobs/exampleJob.js"`. `tsc` does not rewrite
+extensionless imports and Node fails at runtime with `ERR_MODULE_NOT_FOUND`.
+
+**Core isolation rule.** Nothing under `src/main/core/` may import `electron`,
+`react`, `react-dom`, or any file outside `src/main/core/`. Core pushes
+`JobEvent`s through `src/main/core/bus.ts`, and that bus is the only channel
+into a UI. The rest of the main process imports core only via
+`./core/index.js`, never a deeper path. The preload imports core types with
+`import type` ONLY. `tests/core-boundary.test.ts` enforces all three;
+`tests/core/export-surface.test.ts` guards the public surface.
+
+**Native module rebuild.** `better-sqlite3` ships a Node-ABI binary, and the
+app and the tests run on different runtimes. Two scripts:
+
+- `npm run rebuild` — downloads the Electron prebuilt. Run before `npm run dev`
+  and before packaging. `postinstall` runs it automatically.
+- `npm run rebuild:node` — rebuilds from source against the current Node ABI.
+  Run before `npm test`, which executes in plain Node and will otherwise fail
+  with a `NODE_MODULE_VERSION` mismatch.
+
+**State path is configured, not hardcoded.** Core resolves its state dir from
+`__ENV_PREFIX___HOME`, then `configureAppHome`, then `~/.__MODULE_NAME__`. The
+main process calls `configureAppHome(app.getPath("userData"))` at startup.
+Tests point `__ENV_PREFIX___TEST_DB` (SQLite path) and `__ENV_PREFIX___HOME`
+at a per-test tmp dir and clean up — never touch the real state dir.
+
+## Commands
+
+```bash
+npm run dev                                # electron-vite dev, hot reload
+npm test                                   # vitest
+npm run lint
+npm run typecheck
+npm run dist:mac                           # or dist:win / dist:linux
+npx vitest run tests/core/exampleJob.test.ts   # single file
+npx vitest run -t "returns aborted"            # single test by name
+```
+
+Run `npm run rebuild:node` after `npm install` and before the first
+`npm test`; run `npm run rebuild` again before launching the app.
+
+## Editing tips
+
+- New event types go in `src/main/core/events.ts` and must be re-exported from
+  `src/main/core/index.ts`, or the preload bridge cannot see them.
+- New IPC channels need an `ipcMain.handle` in `src/main/ipc.ts` AND a method
+  in `src/preload/api.ts` + `index.ts`. `tests/ipc-contract.test.ts` fails if
+  the two drift.
+- Adding a column to `runs` means editing `src/main/core/store/schema.ts` and
+  `src/main/core/store/types.ts` together — `recordRun` and `listRuns` read
+  the typed shape.
+- `src/preload/api.ts` may only use `import type` from core. A value import
+  pulls better-sqlite3 into the preload bundle and fails at load.
+- IPC handlers stay thin: translate the payload, call core, translate back.
+  Logic that lives in a handler cannot be tested without Electron.
+- Long-running work takes an `AbortSignal` and returns a status instead of
+  throwing on cancel, so the UI can always explain what happened.
+
+## Style
+
+Prefer functional modules over classes for job logic — plain functions with
+explicit dependencies passed in. Keep the IPC surface small; add a channel only
+when the UI actually needs it.

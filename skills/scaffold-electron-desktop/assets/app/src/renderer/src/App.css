@@ -1,0 +1,246 @@
+/* __PROJECT_NAME__ — light workspace theme.
+   One accent hue for interactive elements; the amber/red/green family is
+   reserved for status semantics. Adding a second accent colour is how a
+   desktop UI starts looking incoherent, so extend these tokens instead. */
+
+:root {
+  --canvas: #f7f8fa;
+  --bg-surface: #ffffff;
+  --bg-elevated: #f4f5f8;
+
+  --border: #e2e8f0;
+  --border-hover: #cbd5e1;
+
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+
+  --accent: #0ea5e9;
+  --accent-hover: #0284c7;
+  --accent-dim: rgba(14, 165, 233, 0.08);
+
+  --warning: #f59e0b;
+  --error: #ef4444;
+  --success: #10b981;
+
+  --font-ui: system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, monospace;
+
+  --radius: 10px;
+  --radius-sm: 6px;
+  --transition: 160ms ease;
+  --shadow: 0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  background: var(--canvas);
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Flex rather than grid rows: the error banner is conditional, so a fixed
+   row template would misplace <main> whenever the banner is absent. */
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.app-header,
+.banner {
+  flex: 0 0 auto;
+}
+
+.banner {
+  padding: 10px 20px;
+  font-size: 13px;
+}
+
+.banner-error {
+  color: var(--error);
+  background: rgba(239, 68, 68, 0.08);
+  border-bottom: 1px solid rgba(239, 68, 68, 0.25);
+}
+
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 20px;
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.app-header h1 {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+}
+
+.btn {
+  padding: 7px 14px;
+  font: inherit;
+  font-weight: 500;
+  color: var(--text-primary);
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.btn:hover:not(:disabled) {
+  border-color: var(--border-hover);
+  background: var(--bg-elevated);
+}
+
+.btn.primary {
+  color: #fff;
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.btn.primary:hover:not(:disabled) {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.app-main {
+  flex: 1 1 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  padding: 16px 20px;
+  overflow: auto;
+}
+
+.panel {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 16px;
+  min-width: 0;
+}
+
+.panel h2 {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+}
+
+.progress {
+  height: 4px;
+  background: var(--bg-elevated);
+  border-radius: 999px;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+
+.progress-bar {
+  height: 100%;
+  background: var(--accent);
+  transition: width var(--transition);
+}
+
+.event-feed {
+  list-style: none;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  max-height: 420px;
+  overflow: auto;
+}
+
+.event {
+  display: flex;
+  gap: 10px;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.event-type {
+  flex: 0 0 92px;
+  color: var(--text-muted);
+}
+
+.event-msg {
+  color: var(--text-primary);
+  word-break: break-word;
+}
+
+.event-job-end .event-type {
+  color: var(--accent);
+}
+
+.empty {
+  color: var(--text-muted);
+  padding: 8px 0;
+}
+
+.runs {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.runs th {
+  text-align: left;
+  font-weight: 500;
+  color: var(--text-muted);
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.runs td {
+  padding: 7px 8px 7px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.status {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.status-done {
+  color: var(--success);
+  background: rgba(16, 185, 129, 0.1);
+}
+
+.status-aborted {
+  color: var(--warning);
+  background: rgba(245, 158, 11, 0.1);
+}
+
+.status-error {
+  color: var(--error);
+  background: rgba(239, 68, 68, 0.1);
+}

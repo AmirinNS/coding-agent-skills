@@ -14,6 +14,10 @@ coding-agent-skills/
 │   │   ├── scaffold.sh
 │   │   └── assets/
 │   ├── convert-to-house-style/SKILL.md # Migrate an existing project (reuses scaffold-project/assets)
+│   ├── scaffold-electron-desktop/     # Scaffold a new Electron desktop app (electron-vite + React 19)
+│   │   ├── SKILL.md                   #   single-app layout with enforced UI-free src/main/core/
+│   │   ├── scaffold.sh
+│   │   └── assets/
 │   ├── add-capability/                # Bolt a house-style capability onto a project (dispatcher)
 │   │   ├── SKILL.md                   #   routes by name: auth · seo · storage · i18n · payment
 │   │   └── capabilities/             #   one instruction file per capability
