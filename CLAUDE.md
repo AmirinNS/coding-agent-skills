@@ -111,6 +111,8 @@ Your first solution is a hypothesis. Only the real output of a command you actua
 - Never report or reason from output you didn't read. If a step depends on a result, run it and read what it actually printed.
 - **Fail first.** Before fixing a bug, run the reproduction and watch it fail. A check that never failed proves nothing about the fix.
 - **Non-trivial logic leaves a check.** Branches, loops, parsers, security, or data checks must leave one runnable check behind: an assert block, a `demo()` function, or a single test file without framework ceremony. Trivial one-line fixes need no tests.
+- **No tool-call narration.** Run tools directly without announcing them. Never emit filler preambles like "I will now check..." or status notes between tool calls. Speak only to clarify, warn of irreversible operations, or deliver the final response.
+- **Quote decisive error lines.** When diagnosing failures, quote the single line showing the root cause rather than dumping full stack traces or build logs.
 - **Don't invent flags, APIs, or filenames.** Confirm one exists (`--help`, a quick import, `ls`) before relying on it. On "unknown option" or "not found", read what *is* available, do not guess the same shape again.
 - **Same approach fails twice → switch approaches.** Two failures is the signal, not the fifth.
 - For a computed answer, derive it a second, independent way before reporting it.
@@ -133,6 +135,10 @@ In all responses, commit messages, comments, and documentation:
 Output discipline:
 - Deliver code first. Keep explanations shorter than the code diff.
 - If helpful, report trade-offs in one short line: `[code] → skipped: [X], add when [Y]`.
+- No invented abbreviations. Use standard technical acronyms (DB, API, HTTP, URL). Do not invent truncated words (cfg, impl, fn, req) that subword tokenizers split into multiple tokens.
+- Preserve exact constraints. Never compress away negative words (`not`, `never`, `only`, `except`), exact numbers, or units.
+- Safety over brevity. Always write explicit, unambiguous warnings before running destructive or irreversible actions.
+- Chat vs persistent text. Keep chat responses short and direct. Write complete, standard English for files that persist (commit messages, documentation, code comments, and PR descriptions).
 
 ---
 

@@ -22,7 +22,7 @@ Read the staged diff and determine:
 - **Why it changed**: the purpose of the change (feature, fix, refactor, etc.)
 - **What's the main change**: if multiple things changed, identify the primary one
 
-If the plan file exists for this work (check `plans/`), reference it to understand intent. But the diff is the source of truth.
+If a plan file exists for this work (check `plans/`), make sure it is staged and committed with the code. Don't skip it or leave it unstaged. Reference it to understand intent, but the diff is the source of truth.
 
 ## Step 3: Generate Commit Message
 
@@ -117,6 +117,7 @@ instead of a flat array
 
 ## Rules
 - Never commit without staged changes.
+- Include the plan file in the commit. Don't skip or leave `plans/` files unstaged.
 - Never commit files that look like secrets (`.env`, credentials, tokens). Warn the user if these are staged.
 - One commit per logical change. If the staged diff has unrelated changes, suggest splitting.
 - The commit message describes the *result*, not the *process*. "add validation" not "wrote code to validate".

@@ -27,6 +27,7 @@ coding-agent-skills/
 │   ├── implementation-review/SKILL.md # Review code for bugs and flaws
 │   ├── create-docs/SKILL.md          # Generate feature documentation
 │   ├── generate-commit/SKILL.md      # Generate conventional commit messages
+│   ├── document-and-commit/SKILL.md  # Document + stage + commit in one step (combines the two above)
 │   ├── fix-bug/SKILL.md             # Diagnose and fix bugs (reproduce-first)
 │   ├── frontend-design/SKILL.md      # Distinctive, production-grade frontend interfaces
 │   └── frontend-bootstrap-evolution/  # Bootstrap 5 frontend skill
@@ -113,7 +114,7 @@ flowchart TD
 | **1. Planning** | `plan-feature` | Creates a focused implementation plan in `plans/` |
 | **2. Analysis** | `plan-review` | Reviews the plan for flaws, over-engineering, feasibility. Run multiple times — each pass logs changes to the plan file |
 | **3. Design** | `frontend-design` / `frontend-bootstrap-evolution` | For frontend features only. Backend work follows CLAUDE.md guidelines directly |
-| **4. Implementation** | `implementation-review` → `create-docs` → `generate-commit` | Review code (2x), generate docs from staged changes, commit with conventional message |
+| **4. Implementation** | `implementation-review` → `create-docs` → `generate-commit` (or `document-and-commit` to do the last two in one step) | Review code (2x), generate docs from staged changes, commit with conventional message |
 | **5. Maintenance** | `fix-bug` | Reproduce-first bug fixing. Skips phases 1-3 |
 
 ## CLAUDE.md
