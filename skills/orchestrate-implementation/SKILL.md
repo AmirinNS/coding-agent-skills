@@ -1,0 +1,257 @@
+---
+name: orchestrate-implementation
+description: "Delegate implementation of an approved plan to a persistent headless pi session (RPC mode), phase by phase. Per phase: dispatch the implementor, drift-check, run implementation-review, compact the session, then document-and-commit. Questions are answered in-session. Drift halts with a CTO report. Commit is per phase (or per plan if unphased), never per milestone. Triggers: 'implement the plan', 'delegate the implementation', 'orchestrate the implementation', 'run the plan', 'execute the plan', 'build this plan', 'implement by phase'."
+---
+
+# Orchestrate Implementation
+
+You are the orchestrator. You do not write the phase code yourself. You delegate implementation of an approved plan to a persistent headless `pi` session (RPC mode), one phase at a time, and you are the only bridge between that implementor and the user.
+
+## Why this exists
+
+The main session keeps a clean, high-level context. The implementor does the file-level work in one long-lived pi session, so context and provider cache survive across phases. Questions flow up to you. You answer what you can, and only bother the user when the answer is a real judgment call.
+
+## Inputs
+
+- An approved plan at `plans/<slug>.md` (written by plan-feature, reviewed by plan-review).
+- The target project is the current working directory.
+- Optional: the user may specify the implementor model, thinking level, or a phase to start from.
+
+If no plan path is given, discover it with `ls plans/*.md`. If more than one exists, ask which to implement. If none exists, stop and tell the user to run plan-feature first.
+
+## Step 1: Read the plan and map its phases
+
+Read `plans/<slug>.md`. Build an ordered list of phases, each with its milestones. Two formats exist; detect which applies.
+
+**A. Metadata block present** (pembina-style plans carry `## Metadata` with `phased` and `phases`). Use it directly. Each entry in `phases` is a phase, and its `milestones` array is the ordered milestone list.
+
+**B. Heading-based** (current plan-feature output). Scan headings:
+- A phase is a heading containing `Phase` (for example `### Phase A: Foundation`).
+- A milestone is a heading containing `Milestone N` (for example `### Milestone 1: ...`).
+- Each milestone belongs to the nearest phase heading above it. Milestones with no phase heading above them belong to an implicit first phase, or to the whole plan if no phase headings exist.
+- If the plan has no phase headings, treat the whole plan as a single phase.
+
+Record each phase's label (or `whole plan` when unphased) and its ordered milestone numbers. This map drives the loop. Do not re-derive it mid-run.
+
+## Step 2: Set up the run
+
+Do these once.
+
+- **Helper script**: `pi-rpc.sh` ships next to this skill. Invoke it as `bash <path-to-skill>/pi-rpc.sh <slug> <command> ...`. It manages one `pi --mode rpc` process per plan.
+- **Handoff files** (all under `plans/`, created empty if missing):
+  - `plans/<slug>-questions.md`: implementor appends blocking questions.
+  - `plans/<slug>-answers.md`: you append answers.
+  - `plans/<slug>-implementation-log.md`: implementor appends a report after each phase.
+- **Start the session**: `bash pi-rpc.sh <slug> start`.
+
+Create the three handoff files and start the session now. Do not modify `plans/<slug>.md` itself; it is the source of truth.
+
+## Step 3: Phase loop (per phase)
+
+For each phase, in order:
+
+1. Record the phase baseline: `git rev-parse HEAD`.
+2. Write the dispatch prompt to `plans/<slug>-dispatch.md` (see the template below), filling in this phase's label and milestone numbers.
+3. Run the implementor: `bash pi-rpc.sh <slug> run plans/<slug>-dispatch.md`. Read the final text (the trailing JSON block) from stdout.
+4. Branch:
+   - `"status": "blocked"`: resolve the listed questions (Step 4), then re-run step 3. The implementor resumes in-session.
+   - `"status": "done"`: continue to the drift check (step 5).
+   - Missing or malformed JSON: treat as blocked. Read the questions file. If it is empty, re-run step 3 once. If it fails again, escalate.
+5. **Drift check.** Treat the implementor as a junior/mid developer; do not trust its self-assessment. Inspect the actual diff (`git diff`, `git status --porcelain`) against the phase's milestones. Re-check the reported `→ Verify:` results. Look for: scope creep, skipped steps, contradicted Decisions Log entries, convention violations, security issues, silent behavior changes. Check `git rev-parse HEAD` still equals the baseline from step 1. If HEAD moved (the implementor committed during implementation), halt all operations immediately (Step 5). If drift, halt and report (Step 5). If a verify check genuinely failed, re-run this phase once; if it fails again, halt and report.
+6. **Implementation review (per phase).** Review the phase yourself, in this session. Scope is this phase only: `git diff <baseline>` plus new untracked files. Follow the implementation-review skill. Apply critical fixes and run tests. Handle the review's two non-fixed buckets:
+   - **Needs Your Input** (close tradeoffs): resolve through Step 4.
+   - **Issues Reported (not auto-fixed)**: do not fix, do not block. Carry them to Step 6 so the user can opt in.
+   Do not proceed until no critical issues remain.
+7. **Compact the session.** `bash pi-rpc.sh <slug> compact "Summarize what phase <label> built: files touched and key changes, for documentation and commit purposes."` This frees context before the finalize step while keeping the same session and cache. If the response reports `success:false` with `Nothing to compact (session too small)`, treat it as a soft skip and proceed; the session was already small enough.
+8. **Document and commit (per phase).** Write the finalize prompt to `plans/<slug>-finalize.md` (see the template below), filling in the phase label and baseline. Run `bash pi-rpc.sh <slug> run plans/<slug>-finalize.md`. Branch on its JSON block exactly as in step 4.
+9. **Verify the commit.** `git rev-list --count <baseline>..HEAD` must equal 1. Exactly one commit for this phase. If it is not 1, halt all operations immediately (Step 5).
+10. Advance to the next phase. Its baseline is the new HEAD.
+
+## Step 4: Resolve implementor questions
+
+For each new question in `plans/<slug>-questions.md`, classify it first, then act.
+
+**Answer it yourself** when the right answer is clear from one of these:
+- the plan itself already implies it,
+- the project conventions (`CLAUDE.md` / `AGENTS.md`) settle it,
+- established best practice with no real tradeoff,
+- an existing pattern in the codebase the implementor should follow.
+
+Write the answer to `plans/<slug>-answers.md` with a one-line rationale. Use best judgment and move on.
+
+**Ask the user** when none of the above holds: a genuine product or design tradeoff, a missing requirement, a plan ambiguity with material consequences, or two or more defensible options where guessing risks rework. Present the question, the top options with tradeoffs, and your recommendation. Record the user's answer in `plans/<slug>-answers.md`.
+
+Question block (implementor appends):
+
+```
+### Q<n>: <short title>
+Context: <what it was doing and why this blocks it>
+Question: <one clear question>
+Options considered: <options and tradeoffs, if any>
+```
+
+Answer block (you append):
+
+```
+### A<n> (Q<n>)
+Answer: <the decision, stated as an instruction>
+Rationale: <one line>
+```
+
+Number questions `Q1`, `Q2`, ... sequentially across the whole run. Never reuse a number. When a phase is re-run, the implementor reads all answers written so far and resumes.
+
+## Step 5: Drift halt and CTO report
+
+You are the lead. The implementor is a junior/mid developer. When you detect it doing something wrong, stop it and report to the user (the CTO). Do not fix the mistake yourself and do not let the implementor keep going.
+
+**What counts as wrong (drift):**
+- scope creep: touched files or milestones outside the assigned phase,
+- skipped a plan step or milestone,
+- contradicted a plan Decisions Log entry or an explicit plan step,
+- broke the project's conventions (`CLAUDE.md` / `AGENTS.md`),
+- introduced a security issue,
+- faked or skipped verification: claimed a `→ Verify:` passed without running it,
+- made a silent behavior change the plan does not call for,
+- committed during implementation, before the phase's document-and-commit step.
+
+A deviation that is clearly better and stays within the plan's goal is not drift. Note it, continue, and surface it in the final summary so the CTO knows the plan may need updating.
+
+When you halt, present this report to the user and wait. Take no further action until the CTO decides.
+
+```
+## CTO report
+
+**Incident**: <phase label>, <milestone(s)>
+**What the implementor did wrong**: <concrete, with file:line or diff evidence>
+**Why it is wrong**: <against plan step X, scope, convention, or security>
+**Reported vs actual**: <what the implementor claimed vs what you verified>
+**Impact**: <what breaks or what rework is at risk>
+**Options**:
+1. <option A>, <tradeoff>
+2. <option B>, <tradeoff>
+**My recommendation**: <which option, one line why>
+```
+
+Record the report and the CTO's eventual decision in `plans/<slug>-implementation-log.md`.
+
+## Step 6: Finish
+
+After the last phase is done and committed:
+
+1. `bash pi-rpc.sh <slug> stop`.
+2. Read the full `plans/<slug>-implementation-log.md`.
+3. Run `git status --porcelain` to confirm the working tree is clean, or that only intentional files remain.
+4. Summarize for the user: phases completed, key files touched, review results, questions auto-answered vs escalated, and the commits (one per phase).
+5. List the review's **Issues Reported (not auto-fixed)** items verbatim. Tell the user they were left unfixed on purpose and ask whether to fix any. If the user says fix, route actual bugs to `fix-bug` and the rest to a quick implementor pass.
+
+## Dispatch prompt template
+
+Write this to `plans/<slug>-dispatch.md` for each phase, replacing the placeholders:
+
+````markdown
+You are the implementor for one phase of an approved plan. Work in the current directory and follow the project's CLAUDE.md (or AGENTS.md) conventions exactly. The plan is provided in this message.
+
+## Assignment
+Plan: `plans/<slug>.md`
+Phase: <phase label, or "the whole plan" if unphased>
+Milestones in scope (implement only these): <comma list, e.g. 1, 2, 3>
+
+## Before you start
+1. If `plans/<slug>-answers.md` exists, read it. Treat every A<n> in it as a binding decision. Do not re-ask anything already answered.
+2. If `plans/<slug>-implementation-log.md` exists, read the most recent report for context on earlier phases.
+3. If you already started this phase in an earlier turn, continue from where you stopped. Do not redo completed milestones.
+
+## While implementing
+**Commit policy: do not commit anything. Leave all changes uncommitted. The single commit for this phase happens once, at the very end, by the finalize step.**
+1. Implement the milestones in order, following the plan steps literally. Do not touch work that belongs to another phase.
+2. Run every `→ Verify:` check. Do not continue past a milestone whose verify check fails.
+3. If you hit a blocking ambiguity that the plan and the answers file do not resolve, STOP. Do not guess. Append the question to `plans/<slug>-questions.md` using the question format below, then end with the blocked JSON block.
+4. If the plan conflicts with the codebase in a way that needs a product decision, that is a blocking question, not something to silently resolve.
+
+## Frontend (include this section only when the phase touches UI/UX)
+This phase touches the UI. Apply the frontend-design skill for every page, component, and styling change. If the project uses Bootstrap 5, also apply the frontend-bootstrap-evolution skill so the result does not look like a stock Bootstrap page.
+
+## When the phase is complete
+1. Append a report to `plans/<slug>-implementation-log.md` using the report format below.
+2. End your final message with the done JSON block.
+
+## Question format (append to `plans/<slug>-questions.md`)
+### Q<n>: <short title>
+Context: <what you were doing and why this blocks you>
+Question: <one clear question>
+Options considered: <options and tradeoffs, if any>
+
+## Report format (append to `plans/<slug>-implementation-log.md`)
+## Phase <label>: <name> (done)
+- Milestones completed: <list>
+- Files touched: <list>
+- Verify results: <pass/fail per check>
+- Deviations from plan: <none, or list>
+- Questions raised: <none, or list of Q ids>
+
+## Ending JSON block
+Your final message must end with exactly one fenced JSON block:
+
+```json
+{ "status": "done", "phase": "<label>", "summary": "<one paragraph>" }
+```
+
+or
+
+```json
+{ "status": "blocked", "phase": "<label>", "questions": ["Q<n>", ...] }
+```
+````
+
+## Finalize dispatch template
+
+Write this to `plans/<slug>-finalize.md` for each phase, replacing the placeholders:
+
+````markdown
+You are the finalize step for one phase of an approved plan. Implementation and review for this phase are done. Phase baseline commit: <baseline>.
+
+Run the document-and-commit skill, scoped to this phase only:
+1. Stage this phase's work: `git add -A`.
+2. Confirm `git diff --cached` contains only this phase's changes. If it contains changes from another phase or unrelated work, that is drift; stop and end with the blocked JSON block.
+3. Write the developer documentation for this phase only, based on `git diff --cached` and this phase's report in `plans/<slug>-implementation-log.md`.
+4. Stage the docs, then commit exactly once with a conventional message scoped to this phase. Never commit per milestone.
+
+If the change set is empty (nothing staged), stop and end with the blocked JSON block. Do not fabricate docs.
+
+End your final message with the same JSON block contract:
+
+```json
+{ "status": "done", "phase": "<label>", "summary": "<docs written and commit summary>" }
+```
+````
+
+## Helper script
+
+`pi-rpc.sh` ships next to this skill. Commands:
+
+```bash
+bash pi-rpc.sh <slug> start                 # start the RPC session
+bash pi-rpc.sh <slug> run <prompt-file>     # send a prompt, wait for settled, print final text
+bash pi-rpc.sh <slug> compact "<instr>"     # compact the session with custom instructions
+bash pi-rpc.sh <slug> send '<json>'         # send a raw command (steer, abort, set_model)
+bash pi-rpc.sh <slug> status                # running / not running
+bash pi-rpc.sh <slug> stop                  # terminate and clean state
+```
+
+State lives under `${TMPDIR:-/tmp}/pi-orch-<slug>/`. The event stream is in `events.jsonl` there if you need to inspect tool calls.
+
+## Rules
+
+- You do not implement the plan's milestones yourself; you delegate them to the implementor. You do run the per-phase implementation review and fix critical issues it finds.
+- Treat the implementor as a junior/mid developer. Verify its work after each phase; never trust its self-assessment.
+- On drift (the implementor did something wrong), halt and report to the CTO. Do not fix it yourself and do not continue until the CTO decides.
+- Never advance past a blocked phase, a failed verify check, a malformed report, or detected drift.
+- Do not guess the answer to a question that is a genuine judgment call. That is the one thing you escalate.
+- Do not let the implementor silently resolve a plan-vs-codebase conflict; route it through the questions file.
+- Answer the easy questions yourself. Asking the user about things you can decide wastes their time.
+- One commit per phase (or per plan if unphased), at that phase's document-and-commit step. Never per milestone. If the implementor commits during implementation or review, halt all operations immediately. Do not retry, do not fix, do not continue. Report to the CTO.
+- Compact the session before document-and-commit, on the same RPC session. Do not restart the process or the session.
+- Keep the handoff files append-only. Never rewrite or renumber past entries.
+- The plan file is the source of truth. The implementor never edits it; only you may append to its Decisions Log.
+- When a phase touches UI/UX, the dispatch prompt must tell the implementor to apply frontend-design, and frontend-bootstrap-evolution when the project uses Bootstrap 5.
+- Report progress to the user in one line per phase. Reserve detail for the final summary.

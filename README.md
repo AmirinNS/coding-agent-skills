@@ -25,6 +25,9 @@ coding-agent-skills/
 │   ├── plan-feature/SKILL.md             # Create implementation plans
 │   ├── plan-review/SKILL.md          # Review and iterate on plans
 │   ├── implementation-review/SKILL.md # Review code for bugs and flaws
+│   ├── orchestrate-implementation/    # Delegate implementation to a persistent pi RPC session, phase by phase
+│   │   ├── SKILL.md                   #   orchestrator dispatches phases, runs review, compacts, document-and-commit
+│   │   ├── pi-rpc.sh                  #   helper to drive one persistent pi --mode rpc session
 │   ├── create-docs/SKILL.md          # Generate feature documentation
 │   ├── generate-commit/SKILL.md      # Generate conventional commit messages
 │   ├── document-and-commit/SKILL.md  # Document + stage + commit in one step (combines the two above)
@@ -114,7 +117,7 @@ flowchart TD
 | **1. Planning** | `plan-feature` | Creates a focused implementation plan in `plans/` |
 | **2. Analysis** | `plan-review` | Reviews the plan for flaws, over-engineering, feasibility. Run multiple times — each pass logs changes to the plan file |
 | **3. Design** | `frontend-design` / `frontend-bootstrap-evolution` | For frontend features only. Backend work follows CLAUDE.md guidelines directly |
-| **4. Implementation** | `implementation-review` → `create-docs` → `generate-commit` (or `document-and-commit` to do the last two in one step) | Review code (2x), generate docs from staged changes, commit with conventional message |
+| **4. Implementation** | `orchestrate-implementation` → `implementation-review` → `document-and-commit` | Delegate phased implementation to a persistent pi RPC session, then review and document-and-commit per phase. `document-and-commit` combines `create-docs` and `generate-commit` |
 | **5. Maintenance** | `fix-bug` | Reproduce-first bug fixing. Skips phases 1-3 |
 
 ## CLAUDE.md
