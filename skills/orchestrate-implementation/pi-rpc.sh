@@ -13,8 +13,15 @@
 #   stop               terminate the session and remove its state
 #
 # State lives under ${TMPDIR:-/tmp}/pi-orch-<slug>/.
+#
+# `run` and `compact` exit 1 when the session dies or the event stream goes
+# silent, so the caller can treat a stalled implementor as blocked instead of
+# waiting forever. Silence is measured in seconds and defaults to 600; override
+# with PI_RPC_IDLE_TIMEOUT.
 
 set -u
+
+IDLE_TIMEOUT="${PI_RPC_IDLE_TIMEOUT:-600}"
 
 SLUG="${1:?usage: pi-rpc.sh <slug> <command> [args]}"; shift
 CMD="${1:?command required}"; shift || true
@@ -45,15 +52,39 @@ start() {
   sleep 3
 }
 
+events_size() {
+  wc -c < "$EVENTS" | tr -d ' '
+}
+
 wait_from() {
   # Poll from line $1 for a substring; print new lines up to the match.
+  # Returns 1 if pi exits first, or if the event stream stays silent for
+  # IDLE_TIMEOUT polls, so a dead or stalled implementor cannot hang the caller.
   local start="$1" pattern="$2"
+  local last_size idle=0 size
+  last_size=$(events_size)
   while :; do
     if tail -n +"$start" "$EVENTS" | grep -q "$pattern"; then
       tail -n +"$start" "$EVENTS" | awk -v p="$pattern" '{ print; if (index($0, p)) exit }'
       return 0
     fi
+    if ! running; then
+      echo "pi-rpc: session orchestrate-$SLUG died while waiting for $pattern" >&2
+      tail -n 5 "$ERR" >&2
+      return 1
+    fi
     sleep 1
+    size=$(events_size)
+    if [ "$size" != "$last_size" ]; then
+      last_size="$size"
+      idle=0
+    else
+      idle=$(( idle + 1 ))
+      if [ "$idle" -ge "$IDLE_TIMEOUT" ]; then
+        echo "pi-rpc: no events for ~${IDLE_TIMEOUT}s while waiting for $pattern" >&2
+        return 1
+      fi
+    fi
   done
 }
 
@@ -91,7 +122,10 @@ case "$CMD" in
     start_line=$(( $(wc -l < "$EVENTS") + 1 ))
     msg=$(py_json "$(cat "$file")")
     printf '{"type":"prompt","message":%s}\n' "$msg" >> "$CMDS"
-    wait_from "$start_line" '"type":"agent_settled"' > /dev/null
+    if ! wait_from "$start_line" '"type":"agent_settled"' > /dev/null; then
+      final_text
+      exit 1
+    fi
     final_text
     ;;
   compact)
@@ -103,7 +137,7 @@ case "$CMD" in
     else
       printf '{"type":"compact"}\n' >> "$CMDS"
     fi
-    wait_from "$start_line" '"command":"compact"'
+    wait_from "$start_line" '"command":"compact"' || exit 1
     ;;
   send)
     json="${1:?usage: pi-rpc.sh <slug> send '<json>'}"

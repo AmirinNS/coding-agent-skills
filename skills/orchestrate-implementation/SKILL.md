@@ -58,10 +58,17 @@ For each phase, in order:
    - `"status": "done"`: continue to the drift check (step 5).
    - Missing or malformed JSON: treat as blocked. Read the questions file. If it is empty, re-run step 3 once. If it fails again, escalate.
 5. **Drift check.** Treat the implementor as a junior/mid developer; do not trust its self-assessment. Inspect the actual diff (`git diff`, `git status --porcelain`) against the phase's milestones. Re-check the reported `→ Verify:` results. Look for: scope creep, skipped steps, contradicted Decisions Log entries, convention violations, security issues, silent behavior changes. Check `git rev-parse HEAD` still equals the baseline from step 1. If HEAD moved (the implementor committed during implementation), halt all operations immediately (Step 5). If drift, halt and report (Step 5). If a verify check genuinely failed, re-run this phase once; if it fails again, halt and report.
-6. **Implementation review (per phase).** Review the phase yourself, in this session. Scope is this phase only: `git diff <baseline>` plus new untracked files. Follow the implementation-review skill. Apply critical fixes and run tests. Handle the review's two non-fixed buckets:
+6. **Implementation review (per phase).** Review the phase yourself, in this session. Scope is this phase only: `git diff <baseline>` plus new untracked files. Follow the implementation-review skill, split across the two sessions:
+   - **Flaw detection, plan deviation check, and fixes stay with you.** The implementor wrote this code and cannot review it independently. Apply critical fixes yourself.
+   - **Validate and test is delegated.** Once your fixes are in place, write the validate prompt to `plans/<slug>-validate.md` (see the template below) and run `bash pi-rpc.sh <slug> run plans/<slug>-validate.md`. Read the results from its JSON block. Test output is bulky and needs no judgment, so it does not belong in your context.
+
+   The validate step is read-only. Compare `git status --porcelain` before and after it; if the tree changed, that is drift (Step 5).
+
+   Handle the review's two non-fixed buckets:
    - **Needs Your Input** (close tradeoffs): resolve through Step 4.
-   - **Issues Reported (not auto-fixed)**: do not fix, do not block. Carry them to Step 6 so the user can opt in.
-   Do not proceed until no critical issues remain.
+   - **Issues Reported (not auto-fixed)**: do not fix, do not block. Carry them to the Finish step so the user can opt in.
+
+   If a check comes back `fail`, fix it yourself and re-run the validate prompt. Do not proceed until every check passes or is legitimately skipped, and no critical issues remain.
 7. **Compact the session.** `bash pi-rpc.sh <slug> compact "Summarize what phase <label> built: files touched and key changes, for documentation and commit purposes."` This frees context before the finalize step while keeping the same session and cache. If the response reports `success:false` with `Nothing to compact (session too small)`, treat it as a soft skip and proceed; the session was already small enough.
 8. **Document and commit (per phase).** Write the finalize prompt to `plans/<slug>-finalize.md` (see the template below), filling in the phase label and baseline. Run `bash pi-rpc.sh <slug> run plans/<slug>-finalize.md`. Branch on its JSON block exactly as in step 4.
 9. **Verify the commit.** `git rev-list --count <baseline>..HEAD` must equal 1. Exactly one commit for this phase. If it is not 1, halt all operations immediately (Step 5).
@@ -203,6 +210,33 @@ or
 ```
 ````
 
+## Validate dispatch template
+
+Write this to `plans/<slug>-validate.md` during step 6, replacing the placeholders:
+
+````markdown
+You are the validation step for one phase of an approved plan. The code is already written and reviewed. Your job is to run checks and report results. Nothing else.
+
+**You are read-only. Do not edit, create, or delete any file. Do not commit. Do not fix anything you find. If a check fails, report the failure and move on to the next check.**
+
+## What to run
+1. Discover the project's real commands by reading `package.json`, `Makefile`, `pyproject.toml`, or the equivalent. Do not guess command names.
+2. Run the test suite. If the project has none, say so.
+3. Run the lint and build/typecheck steps if they exist.
+4. Run every `→ Verify:` check listed in `plans/<slug>.md` for milestones <comma list>.
+
+## How to report
+One line per command. Quote only the decisive failing line for anything that fails, never the full log.
+
+End your final message with exactly one fenced JSON block:
+
+```json
+{ "status": "done", "phase": "<label>", "checks": [{ "cmd": "<command>", "result": "pass|fail|skipped", "detail": "<one line, empty when pass>" }] }
+```
+
+Use `"skipped"` when the project has no such check. Report `"status": "done"` even when checks fail; the failures belong in the `checks` array. Use `"status": "blocked"` only if you cannot run the checks at all.
+````
+
 ## Finalize dispatch template
 
 Write this to `plans/<slug>-finalize.md` for each phase, replacing the placeholders:
@@ -243,6 +277,7 @@ State lives under `${TMPDIR:-/tmp}/pi-orch-<slug>/`. The event stream is in `eve
 ## Rules
 
 - You do not implement the plan's milestones yourself; you delegate them to the implementor. You do run the per-phase implementation review and fix critical issues it finds.
+- Review judgment stays with you. Only the mechanical validate-and-test pass is delegated, and that pass is read-only: it reports results and never fixes what it finds.
 - Treat the implementor as a junior/mid developer. Verify its work after each phase; never trust its self-assessment.
 - On drift (the implementor did something wrong), halt and report to the CTO. Do not fix it yourself and do not continue until the CTO decides.
 - Never advance past a blocked phase, a failed verify check, a malformed report, or detected drift.
