@@ -28,6 +28,9 @@ coding-agent-skills/
 │   ├── orchestrate-implementation/    # Delegate implementation to a persistent pi RPC session, phase by phase
 │   │   ├── SKILL.md                   #   orchestrator dispatches phases, runs review, compacts, document-and-commit
 │   │   ├── pi-rpc.sh                  #   helper to drive one persistent pi --mode rpc session
+│   ├── run-expo-android/             # Build an Expo app, run it on an Android emulator, drive it by text and screenshots
+│   │   ├── SKILL.md                   #   Linux x86_64 and macOS (Apple Silicon or Intel), no sudo
+│   │   └── scripts/                   #   setup, emulator, build, metro, tap, shot, fields, crash
 │   ├── create-docs/SKILL.md          # Generate feature documentation
 │   ├── generate-commit/SKILL.md      # Generate conventional commit messages
 │   ├── document-and-commit/SKILL.md  # Document + stage + commit in one step (combines the two above)
@@ -117,7 +120,7 @@ flowchart TD
 | **1. Planning** | `plan-feature` | Creates a focused implementation plan in `plans/` |
 | **2. Analysis** | `plan-review` | Reviews the plan for flaws, over-engineering, feasibility. Run multiple times — each pass logs changes to the plan file |
 | **3. Design** | `frontend-design` / `frontend-bootstrap-evolution` | For frontend features only. Backend work follows CLAUDE.md guidelines directly |
-| **4. Implementation** | `orchestrate-implementation` → `implementation-review` → `document-and-commit` | Delegate phased implementation to a persistent pi RPC session, then review and document-and-commit per phase. `document-and-commit` combines `create-docs` and `generate-commit` |
+| **4. Implementation** | `orchestrate-implementation` → `implementation-review` → `document-and-commit` | Delegate phased implementation to a persistent pi RPC session, then review and document-and-commit per phase. For an Expo app, the review runs the app on an emulator with `run-expo-android`. `document-and-commit` combines `create-docs` and `generate-commit` |
 | **5. Maintenance** | `fix-bug` | Reproduce-first bug fixing. Skips phases 1-3 |
 
 ## CLAUDE.md
