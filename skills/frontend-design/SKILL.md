@@ -34,7 +34,25 @@ Before coding, understand the context and commit to a BOLD aesthetic direction:
 
 **CRITICAL**: Choose a clear conceptual direction and execute it with precision. Bold maximalism and refined minimalism both work — the key is intentionality, not intensity.
 
-## Step 3: Implement
+## Step 3: UX Behavior
+
+Aesthetics cover the happy path. Decide the rest before writing any CSS. For every screen or component in scope, state what it does in each condition:
+
+- **Empty**: no data yet, or a filter matched nothing. What does the user see, and what is the next action?
+- **Loading**: skeleton, spinner, or optimistic render. Never an unexplained blank region.
+- **Error**: what failed, whether the user can retry, and what they lose if they don't.
+- **Success**: how a completed action confirms itself without a full page reload jolt.
+
+Also settle these where they apply:
+
+- **Forms**: when validation fires (on blur, not on every keystroke), where the message sits relative to the field, and what the submit button does while the request is in flight.
+- **Destructive actions**: a confirmation step that names the specific thing being destroyed, or an undo window instead.
+- **Navigation**: where this screen sits in the app, how the user got here, and how they get back.
+- **Keyboard and focus**: tab order follows visual order, focus is visible against the chosen palette, and focus moves into any modal or drawer and returns on close.
+
+Write this out as a short list before Step 4. Any state you skip here becomes a blank screen or a dead end in the shipped build.
+
+## Step 4: Implement
 
 Build working code (HTML/CSS/JS, React, Vue, etc.) that is:
 - Production-grade and functional
@@ -59,9 +77,10 @@ Interpret creatively and make unexpected choices that feel genuinely designed fo
 
 **IMPORTANT**: Match implementation complexity to the aesthetic vision. Maximalist designs need elaborate code with extensive animations and effects. Minimalist or refined designs need restraint, precision, and careful attention to spacing, typography, and subtle details. Elegance comes from executing the vision well.
 
-## Step 4: Verify
+## Step 5: Verify
 
 After implementation, check before handing off to review:
+- [ ] Every state declared in Step 3 renders — force each one, don't assume
 - [ ] Renders correctly in browser — no broken layouts or missing assets
 - [ ] Responsive — works on mobile, tablet, and desktop viewports
 - [ ] Interactive elements work — buttons, links, hover states, animations trigger correctly
