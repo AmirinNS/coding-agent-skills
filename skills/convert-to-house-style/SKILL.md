@@ -40,7 +40,7 @@ Never begin migration edits until there is a committed baseline you can roll bac
 
 Read before concluding — do not assume. Cover:
 
-- `CLAUDE.md`, `AGENTS.md`, `README.md`, `docs/` — the project's own stated conventions (these override the generic house style where they conflict; surface conflicts, don't silently override).
+- `CLAUDE.md`, `AGENTS.md`, `README.md`, `docs/` — the project's own stated conventions (these override the generic house style where they conflict; surface conflicts, don't silently override). **If the project has neither `CLAUDE.md` nor `AGENTS.md`, record that as a gap.** A migrated project with no stated conventions loses them the moment this run ends; the next agent has nothing to read. Step 5 writes one.
 - **Framework:** Flask / Bottle / Django / FastAPI / other? (check entrypoint + imports)
 - **Database:** MongoDB / Postgres / MySQL / SQLite? ORM in use (SQLAlchemy, MongoEngine, Django ORM)?
 - **Layout:** where do routes, business logic, templates, static, config live? Is logic tangled into route handlers?
@@ -87,6 +87,7 @@ Flask + Bootstrap 5 + MongoDB (or the subset the user approved). Note anything i
 | Error pages | ... | one themed `error.html` for all codes via `sources/errors.py` (`init_errors`), JSON for `/api`, `noindex` | ... | ... |
 | Import hygiene | ... | top-level only | ... | ... |
 | Layout | ... | modules/ sources/ templates/ static/ | ... | ... |
+| Stated conventions | present / absent | `CLAUDE.md` (or `AGENTS.md`) documenting stack, conventions, run commands | ... | ... |
 
 ## Phases (each independently shippable + verifiable)
 ### Phase 1: <lowest-risk slice, e.g. import hygiene + extract service functions>
@@ -121,13 +122,27 @@ For each approved phase:
 
 If a phase can't be verified green, stop and report — don't stack another phase on a broken one.
 
+## Step 5: Write the project's CLAUDE.md (only if it has none)
+
+Skip this entirely if the project already has a `CLAUDE.md` or `AGENTS.md`. Never overwrite one; that file is the project's own voice and it outranks this skill.
+
+Do this **after the last phase is committed**, not earlier. The migration changes the stack, layout, and run commands, so a file written during assessment would document the state you just migrated away from.
+
+1. Copy `CLAUDE-template.md` from the root of this skills repo (sibling to `skills/`) to `<project>/CLAUDE.md`. Use `AGENTS.md` instead if the project's other agents look for that name.
+2. Fill it in from what the migration actually produced, not from the plan's intent. Read the final tree and the real commands before writing each section: Stack, Critical Setup (the venv path confirmed in Step 0), Running Tests, Common Commands, Architecture, Important File Locations.
+3. In **Language Conventions**, keep the Python block and delete the others. Add anything this project does differently from house style that the user chose to keep, so the next agent doesn't "fix" it.
+4. In **Key Patterns**, record the deviations from house style listed under the plan's **Out of scope**, with the reason. That is the section which stops a future agent from re-opening a decision the user already made.
+5. Leave a section's placeholder comments in place rather than inventing content for it. An honest gap beats a confident wrong answer.
+
+Commit it separately from the migration phases: `docs: add CLAUDE.md documenting post-migration conventions`.
+
 ## Rules
 
 - **No baseline, no migration.** A committed, revertible starting point is mandatory.
 - **App stays runnable every step.** No big-bang rewrites; slice it.
 - **Surgical changes only.** Every changed line traces to the migration. Don't refactor things that aren't in the plan; mention unrelated dead code, don't delete it.
 - **Framework/DB swaps need explicit sign-off** — never assume the user wants Postgres→Mongo or a framework change; present the cost and let them decide.
-- **Respect the project's own `CLAUDE.md`.** Where it conflicts with the generic house style, surface the conflict and let the user choose.
+- **Respect the project's own `CLAUDE.md`.** Where it conflicts with the generic house style, surface the conflict and let the user choose. Never overwrite it. Write one from `CLAUDE-template.md` only when the project has none, and only after the last phase is committed (Step 5).
 - **Don't manufacture work.** If it already conforms, say so and stop.
 - Enforce house-style discipline in what you touch: functional (no OOP for logic/views), direct PyMongo (no ORM), thin routes + `modules/` service layer, top-level imports, 4-space indent for new code.
 - For new files created during migration, **copy from `scaffold-project/assets/` and substitute tokens** — never hand-write them. Read `scaffold-project/SKILL.md` first so any prose conventions added there are honored too. This is the mechanism that keeps convert output identical to scaffold output as the house style evolves.

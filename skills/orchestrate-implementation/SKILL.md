@@ -1,6 +1,6 @@
 ---
 name: orchestrate-implementation
-description: "Delegate implementation of an approved plan to a persistent headless pi session (RPC mode), phase by phase. Per phase: dispatch the implementor, drift-check, run implementation-review, compact the session, then document-and-commit. Questions are answered in-session. Drift halts with a CTO report. Commit is per phase (or per plan if unphased), never per milestone. Triggers: 'implement the plan', 'delegate the implementation', 'orchestrate the implementation', 'run the plan', 'execute the plan', 'build this plan', 'implement by phase'."
+description: "Delegate implementation of an approved plan to a persistent headless pi session (RPC mode), phase by phase. Per phase: dispatch the implementor, drift-check, run implementation-review, compact the session, then document-and-commit. Questions are answered in-session. Drift halts with a CTO report. Commit is per phase (or per plan if unphased), never per milestone. Requires the external pi CLI. Triggers: 'orchestrate with pi', 'implement the plan with pi', 'run the plan through pi', 'delegate the implementation to pi', 'pi orchestrator'. For the Claude-only equivalent with no external CLI, use orchestrate-implementation-claude instead."
 ---
 
 # Orchestrate Implementation
@@ -46,6 +46,8 @@ Do these once.
 
 Create the three handoff files and start the session now. Do not modify `plans/<slug>.md` itself; it is the source of truth.
 
+**Resolve blockers before the first dispatch.** Read the plan for anything the implementor cannot do headless: external accounts or app IDs it would have to create, credentials, physical devices, recordings. Also check the phase map: if the plan has no `Phase`/`Milestone` headings, ask the user how to split it instead of assuming. Ask all of these in one AskUserQuestion call, then record each answer as a pre-dispatch `A<n>` in the answers file so the implementor treats it as binding. Typical ones: which fallback path to take when an external service is not set up, how many commits, and which checks stay with the owner (device tests, demo recording).
+
 ## Step 3: Phase loop (per phase)
 
 For each phase, in order:
@@ -58,6 +60,13 @@ For each phase, in order:
    - `"status": "done"`: continue to the drift check (step 5).
    - Missing or malformed JSON: treat as blocked. Read the questions file. If it is empty, re-run step 3 once. If it fails again, escalate.
 5. **Drift check.** Treat the implementor as a junior/mid developer; do not trust its self-assessment. Inspect the actual diff (`git diff`, `git status --porcelain`) against the phase's milestones. Re-check the reported `→ Verify:` results. Look for: scope creep, skipped steps, contradicted Decisions Log entries, convention violations, security issues, silent behavior changes. Check `git rev-parse HEAD` still equals the baseline from step 1. If HEAD moved (the implementor committed during implementation), halt all operations immediately (Step 5). If drift, halt and report (Step 5). If a verify check genuinely failed, re-run this phase once; if it fails again, halt and report.
+
+   The implementor's report is a claim, not evidence. Checks that caught real overclaims:
+   - **Stubs.** Grep the diff for `placeholder`, `decorative`, `not a real`, `in prototype`, `for testing`, hardcoded sample values, and buttons that navigate instead of acting. A "done" core flow built from these is drift.
+   - **Orphan modules.** For every core module the plan names, confirm a screen or entry point imports it (`grep -rn "from .*<module>"`). A tested module nothing calls means the feature is fake.
+   - **Claimed items.** For each item in a fix list, open the file:line it cites and read it. Assets "copied and used" must be referenced somewhere.
+   - **Build checks that prove nothing.** A bundle or export that passes can still exclude the app. Check the entry file actually imports the app and the module count is plausible. Check framework dependency alignment (for Expo: `npx expo install --check`).
+   - **Plan rules.** Grep for the plan's hard rules directly (forbidden endpoints, float maths on money, banned words, secrets).
 6. **Implementation review (per phase).** Review the phase yourself, in this session. Scope is this phase only: `git diff <baseline>` plus new untracked files. Follow the implementation-review skill, split across the two sessions:
    - **Flaw detection, plan deviation check, and fixes stay with you.** The implementor wrote this code and cannot review it independently. Apply critical fixes yourself.
    - **Validate and test is delegated.** Once your fixes are in place, write the validate prompt to `plans/<slug>-validate.md` (see the template below) and run `bash pi-rpc.sh <slug> run plans/<slug>-validate.md`. Read the results from its JSON block. Test output is bulky and needs no judgment, so it does not belong in your context.
@@ -69,6 +78,8 @@ For each phase, in order:
    - **Issues Reported (not auto-fixed)**: do not fix, do not block. Carry them to the Finish step so the user can opt in.
 
    If a check comes back `fail`, fix it yourself and re-run the validate prompt. Do not proceed until every check passes or is legitimately skipped, and no critical issues remain.
+
+   **Run it.** When the phase ships an app (mobile, web, CLI), typecheck, unit tests and a bundle build are not proof that it works. Launch it and drive the phase's core flow before committing. For an Expo or React Native app, use the `run-expo-android` skill (Linux and macOS). For other app types, use the project's own run instructions or the `run` skill. Things only a running app revealed: a render crash from an invalid SVG path, buttons whose handler never fired, `\uXXXX` escapes printed literally in JSX text, two tab bars, missing safe-area insets, routes to screens that do not exist. Fix critical runtime bugs as part of the review. Record what was verified on the running app, and what could not be (for example no test funds, or no physical camera), in the implementation log.
 7. **Compact the session.** `bash pi-rpc.sh <slug> compact "Summarize what phase <label> built: files touched and key changes, for documentation and commit purposes."` This frees context before the finalize step while keeping the same session and cache. If the response reports `success:false` with `Nothing to compact (session too small)`, treat it as a soft skip and proceed; the session was already small enough.
 8. **Document and commit (per phase).** Write the finalize prompt to `plans/<slug>-finalize.md` (see the template below), filling in the phase label and baseline. Run `bash pi-rpc.sh <slug> run plans/<slug>-finalize.md`. Branch on its JSON block exactly as in step 4.
 9. **Verify the commit.** `git rev-list --count <baseline>..HEAD` must equal 1. Exactly one commit for this phase. If it is not 1, halt all operations immediately (Step 5).
@@ -118,6 +129,9 @@ You are the lead. The implementor is a junior/mid developer. When you detect it 
 - broke the project's conventions (`CLAUDE.md` / `AGENTS.md`),
 - introduced a security issue,
 - faked or skipped verification: claimed a `→ Verify:` passed without running it,
+- shipped a stub, placeholder, sample value or navigation-only button as a finished step,
+- reported "no UI in scope" while the diff changes pages, components, templates, or styling,
+- reported "no Python in scope" while the diff changes `.py` files,
 - made a silent behavior change the plan does not call for,
 - committed during implementation, before the phase's document-and-commit step.
 
@@ -174,9 +188,23 @@ Milestones in scope (implement only these): <comma list, e.g. 1, 2, 3>
 2. Run every `→ Verify:` check. Do not continue past a milestone whose verify check fails.
 3. If you hit a blocking ambiguity that the plan and the answers file do not resolve, STOP. Do not guess. Append the question to `plans/<slug>-questions.md` using the question format below, then end with the blocked JSON block.
 4. If the plan conflicts with the codebase in a way that needs a product decision, that is a blocking question, not something to silently resolve.
+5. Never replace real behavior with a stub, placeholder, sample value or navigation-only button to get a step "done". If you cannot finish part of a step, say exactly which part and why in the report.
+6. A passing typecheck, test run or bundle build does not prove the app runs. Do not describe work as working unless you exercised it. List anything you could not run as pending, with the reason.
+7. Verify framework and library APIs and versions against what is installed, not memory. Keep native dependencies aligned with the framework's expected versions.
 
-## Frontend (include this section only when the phase touches UI/UX)
-This phase touches the UI. Apply the frontend-design skill for every page, component, and styling change. If the project uses Bootstrap 5, also apply the frontend-bootstrap-evolution skill so the result does not look like a stock Bootstrap page.
+## Frontend
+Decide this yourself from the milestones in scope; do not wait to be told.
+
+If this phase adds or changes any page, component, template, or styling, apply the frontend-design skill to that work. If the project uses Bootstrap 5, also apply the frontend-bootstrap-evolution skill so the result does not look like a stock Bootstrap page. Name the skills you applied in your phase report.
+
+If this phase touches no UI, ignore this section and say "no UI in scope" in your report.
+
+## Python
+Decide this yourself from the milestones in scope; do not wait to be told.
+
+If this phase writes or edits any Python, apply the python-development skill to that work. Name it in your phase report.
+
+If this phase touches no Python, ignore this section and say "no Python in scope" in your report.
 
 ## When the phase is complete
 1. Append a report to `plans/<slug>-implementation-log.md` using the report format below.
@@ -193,6 +221,8 @@ Options considered: <options and tradeoffs, if any>
 - Milestones completed: <list>
 - Files touched: <list>
 - Verify results: <pass/fail per check>
+- Frontend skills applied: <"no UI in scope", or the skills you applied and where>
+- Python skill applied: <"no Python in scope", or where you applied python-development>
 - Deviations from plan: <none, or list>
 - Questions raised: <none, or list of Q ids>
 
@@ -288,5 +318,6 @@ State lives under `${TMPDIR:-/tmp}/pi-orch-<slug>/`. The event stream is in `eve
 - Compact the session before document-and-commit, on the same RPC session. Do not restart the process or the session.
 - Keep the handoff files append-only. Never rewrite or renumber past entries.
 - The plan file is the source of truth. The implementor never edits it; only you may append to its Decisions Log.
-- When a phase touches UI/UX, the dispatch prompt must tell the implementor to apply frontend-design, and frontend-bootstrap-evolution when the project uses Bootstrap 5.
+- The dispatch prompt's Frontend and Python sections go in every phase, unedited. The implementor decides whether the phase touches UI or Python and self-negates when it does not. You do not make that call, because misreading a phase as backend-only silently ships stock UI, and misreading it as frontend-only silently ships class-based Python.
+- Check the report's "Frontend skills applied" and "Python skill applied" lines against the diff during the drift check. A phase that changed templates or `.py` files but reports "no UI in scope" or "no Python in scope" is a false report, not a judgment call.
 - Report progress to the user in one line per phase. Reserve detail for the final summary.

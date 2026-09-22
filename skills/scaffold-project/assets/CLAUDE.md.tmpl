@@ -17,7 +17,7 @@ Never use system python/pip. Always:
 
 ## Architecture rules
 
-- Functional only. No classes for business logic or views.
+- Functional only. No classes for business logic or views. A class is allowed only when a framework demands one (for example `flask-login`'s `User(UserMixin)`), for a custom exception type, or for a `frozen=True` dataclass value object.
 - Business logic lives in `modules/` as pure functions that take `db` explicitly.
 - Route handlers stay thin: parse request → call a `modules/` function → render/return.
 - Shared helpers and config live in `sources/`.
@@ -27,6 +27,7 @@ Never use system python/pip. Always:
 - 4-space indentation.
 - If you add a Python dependency, update `requirements.txt` in the same change.
 - Stack changes (different framework/DB) require explicit user approval.
+- Use the `python-development` skill when writing or editing Python. It carries the depth these bullets cannot: PEP 8 specifics, error handling at trust boundaries, stdlib choices, and the footguns to check for.
 
 ## Run modes
 

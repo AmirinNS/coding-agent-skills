@@ -28,6 +28,11 @@ coding-agent-skills/
 │   ├── orchestrate-implementation/    # Delegate implementation to a persistent pi RPC session, phase by phase
 │   │   ├── SKILL.md                   #   orchestrator dispatches phases, runs review, compacts, document-and-commit
 │   │   ├── pi-rpc.sh                  #   helper to drive one persistent pi --mode rpc session
+│   ├── orchestrate-implementation-claude/ # Same loop, pure Claude Code, no external CLI
+│   │   ├── SKILL.md                   #   fresh phase-implementor subagent per phase, SendMessage for
+│   │   │                              #   questions, stops at review (no docs, no commits)
+│   │   └── agents/
+│   │       └── phase-implementor.md   #   sonnet subagent, copy to ~/.claude/agents/ to install
 │   ├── run-expo-android/             # Build an Expo app, run it on an Android emulator, drive it by text and screenshots
 │   │   ├── SKILL.md                   #   Linux x86_64 and macOS (Apple Silicon or Intel), no sudo
 │   │   └── scripts/                   #   setup, emulator, build, metro, tap, shot, fields, crash
@@ -36,6 +41,7 @@ coding-agent-skills/
 │   ├── document-and-commit/SKILL.md  # Document + stage + commit in one step (combines the two above)
 │   ├── fix-bug/SKILL.md             # Diagnose and fix bugs (reproduce-first)
 │   ├── frontend-design/SKILL.md      # Distinctive, production-grade frontend interfaces
+│   ├── python-development/SKILL.md   # Production-grade Python: functional, imports at top, PEP 8
 │   └── frontend-bootstrap-evolution/  # Bootstrap 5 frontend skill
 ```
 
@@ -119,8 +125,8 @@ flowchart TD
 |------------|-------|-------------|
 | **1. Planning** | `plan-feature` | Creates a focused implementation plan in `plans/` |
 | **2. Analysis** | `plan-review` | Reviews the plan for flaws, over-engineering, feasibility. Run multiple times — each pass logs changes to the plan file |
-| **3. Design** | `frontend-design` / `frontend-bootstrap-evolution` | For frontend features only. Backend work follows CLAUDE.md guidelines directly |
-| **4. Implementation** | `orchestrate-implementation` → `implementation-review` → `document-and-commit` | Delegate phased implementation to a persistent pi RPC session, then review and document-and-commit per phase. For an Expo app, the review runs the app on an emulator with `run-expo-android`. `document-and-commit` combines `create-docs` and `generate-commit` |
+| **3. Design** | `frontend-design` / `frontend-bootstrap-evolution` / `python-development` | `frontend-design` for UI work, `python-development` for Python. A phase can need both. Other backend work follows CLAUDE.md guidelines directly |
+| **4. Implementation** | `orchestrate-implementation-claude` (or `orchestrate-implementation` for pi) → `implementation-review` → `document-and-commit` | Delegate phased implementation to an implementor, then review. The `-claude` variant spawns a fresh sonnet `phase-implementor` subagent per phase, needs no external CLI, and stops at review: it never commits, so the whole run is left uncommitted and you call `document-and-commit` yourself at the end. The pi variant uses one persistent `pi --mode rpc` session and commits once per phase. For an Expo app, the review runs the app on an emulator with `run-expo-android`. `document-and-commit` combines `create-docs` and `generate-commit` |
 | **5. Maintenance** | `fix-bug` | Reproduce-first bug fixing. Skips phases 1-3 |
 
 ## CLAUDE.md
