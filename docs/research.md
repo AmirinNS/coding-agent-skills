@@ -1,8 +1,8 @@
 # Research log
 
-## 2026-09-21 — pi RPC capabilities available to orchestrate-implementation but not wired in
+## 2026-09-21 — pi RPC capabilities available to orchestrate-implementation-pi but not wired in
 
-**Explored:** End-to-end test of the `orchestrate-implementation` skill against a live `pi --mode rpc` session. Beyond the run itself, surveyed what the pi RPC protocol offers that the skill does not currently use.
+**Explored:** End-to-end test of the `orchestrate-implementation-pi` skill against a live `pi --mode rpc` session. Beyond the run itself, surveyed what the pi RPC protocol offers that the skill does not currently use.
 
 **Key findings:**
 

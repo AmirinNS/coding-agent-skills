@@ -1,0 +1,3 @@
+interface:
+  display_name: "Delegate Work to Codex"
+  short_description: "Delegate tasks to Codex without a plan file"

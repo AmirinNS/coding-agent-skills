@@ -1,6 +1,6 @@
 ---
 name: orchestrate-implementation-claude
-description: "Delegate implementation of an approved plan to a sonnet phase-implementor subagent, phase by phase. Per phase: spawn the implementor, drift-check, run implementation-review. Questions round-trip over SendMessage. Drift halts with a CTO report. Never commits and never writes docs; the whole run is left uncommitted for the user to review, then document-and-commit themselves. Pure Claude Code, no external CLI. Triggers: 'implement the plan', 'delegate the implementation', 'orchestrate the implementation', 'run the plan', 'execute the plan', 'build this plan', 'implement by phase'."
+description: "Delegate implementation of an approved plan to a sonnet phase-implementor subagent, phase by phase. Per phase: spawn the implementor, drift-check, run implementation-review. Questions round-trip over SendMessage. Drift halts with a CTO report. Never commits and never writes docs; the whole run is left uncommitted for the user to review, then document-and-commit themselves. Pure Claude Code, no external CLI. Triggers: 'implement the plan', 'delegate the implementation', 'orchestrate the implementation', 'run the plan', 'execute the plan', 'build this plan', 'implement by phase'. For a direct task or when no plan is available, use delegate-work-claude instead."
 ---
 
 # Orchestrate Implementation (Claude subagents)
@@ -8,6 +8,37 @@ description: "Delegate implementation of an approved plan to a sonnet phase-impl
 You are the orchestrator. You do not write the phase code yourself. You delegate
 implementation of an approved plan to a `phase-implementor` subagent, one phase at a time,
 and you are the only bridge between that implementor and the user.
+
+## Inputs and plan gate
+
+- An existing approved plan at `plans/<slug>.md` (written by plan-feature, reviewed by plan-review).
+- The target project is the current working directory.
+- Optional: the user may specify a phase to start from, or override the implementor model.
+
+Resolve the plan before checking agents, creating handoff files, taking snapshots, spawning
+subagents, or editing project files. This workflow must not execute without an existing,
+readable approved plan. Use approval already established in the conversation.
+
+- If the request is a direct task without an instruction to implement a plan, recommend
+  `delegate-work-claude`. An unrelated `plans/` folder does not change that routing.
+- If a plan path is supplied, verify that exact file exists and can be read. If it is missing
+  or unreadable, report the path problem. Do not silently substitute another plan.
+- If the request explicitly asks for plan implementation without a path, discover plan files
+  only when `plans/` exists. Use `ls plans/*.md 2>/dev/null`, then identify actual implementation
+  plans rather than index or reference documents. Ask which plan to use if several qualify.
+- If no plan is available, stop this workflow and recommend `delegate-work-claude`. Do not
+  require the user to run plan-feature or create a plan merely to delegate a task.
+
+When a calling orchestrator selected this skill, return the routing recommendation with the
+original task and constraints so it can select `delegate-work-claude`. When speaking directly
+to the user, explain the missing prerequisite and offer this invocation:
+
+```text
+Use delegate-work-claude to <the original task, with its constraints>.
+```
+
+If the user wants phased plan implementation, they can provide the existing approved plan
+instead. Do not invent phases or run the plan workflow while waiting for that input.
 
 ## Why this exists
 
@@ -18,12 +49,27 @@ judgment call.
 
 One implementor per phase, not one per run. Subagents cannot be compacted, so a single
 implementor carried across every phase would grow unbounded with no recovery path. A fresh
-spawn per phase is the compaction. Continuity across phases comes from
-`plans/<slug>-implementation-log.md`, which each new implementor reads first.
+spawn per phase is the boundary reset. Continuity across phases comes from
+`.orchestrate/<slug>/implementation-log.md`, which each new implementor reads first.
 
 This skill stops at review. It does not write documentation and does not commit, ever. The
 whole run lands in the working tree for the user to inspect as one change set, and they decide
 when to run `document-and-commit`.
+
+### Context pressure and compaction
+
+Claude Code subagents have no manual compaction command. A fresh spawn per phase is the
+boundary reset, not a compaction mechanism. If an implementor observes a context-pressure or
+compaction warning, it must save a checkpoint in the implementation log, append a question to
+the questions file, and end the turn as blocked. Preserve plan constraints, decisions,
+completed and pending milestones, and verification evidence. The orchestrator decides whether
+to continue, narrow the phase scope, or spawn a replacement implementor from the checkpoint.
+The implementor must not attempt manual compaction.
+
+Automatic context management can trigger before the worker reports a warning. Prompt
+instructions cannot guarantee control over automatic context handling. Do not invent
+compaction commands, restart a session to imitate one, or change global settings to bypass
+this limitation.
 
 ## Prerequisite
 
@@ -43,15 +89,6 @@ cp <path-to-this-skill>/agents/phase-implementor.md ~/.claude/agents/
 Claude Code only loads agent definitions from `~/.claude/agents/` or a project's
 `.claude/agents/`, so the copy is required; the file cannot stay in the skill directory and
 still be spawnable. It is picked up on spawn, so no restart is needed.
-
-## Inputs
-
-- An approved plan at `plans/<slug>.md` (written by plan-feature, reviewed by plan-review).
-- The target project is the current working directory.
-- Optional: the user may specify a phase to start from, or override the implementor model.
-
-If no plan path is given, discover it with `ls plans/*.md`. If more than one exists, ask
-which to implement. If none exists, stop and tell the user to run plan-feature first.
 
 ## Step 1: Read the plan and map its phases
 
@@ -77,10 +114,10 @@ This map drives the loop. Do not re-derive it mid-run.
 
 Do these once.
 
-Create these handoff files under `plans/`, empty if missing:
-- `plans/<slug>-questions.md`: implementor appends blocking questions.
-- `plans/<slug>-answers.md`: you append answers.
-- `plans/<slug>-implementation-log.md`: implementor appends a report after each phase.
+Create these handoff files under `.orchestrate/<slug>/` at the project root, empty if missing. `plans/` holds plan files only; commit `.orchestrate/` with the work so the run record stays reviewable:
+- `.orchestrate/<slug>/questions.md`: implementor appends blocking questions.
+- `.orchestrate/<slug>/answers.md`: you append answers.
+- `.orchestrate/<slug>/implementation-log.md`: implementor appends a report after each phase.
 
 The files are the durable record and the cross-phase handoff. `SendMessage` carries the live
 conversation within a phase; the files carry it across phases and survive the run.
@@ -193,7 +230,7 @@ yourself.
 
 ## Step 4: Resolve implementor questions
 
-For each new question in `plans/<slug>-questions.md`, classify it first, then act.
+For each new question in `.orchestrate/<slug>/questions.md`, classify it first, then act.
 
 **Answer it yourself** when the right answer is clear from one of these:
 - the plan itself already implies it,
@@ -201,13 +238,13 @@ For each new question in `plans/<slug>-questions.md`, classify it first, then ac
 - established best practice with no real tradeoff,
 - an existing pattern in the codebase the implementor should follow.
 
-Write the answer to `plans/<slug>-answers.md` with a one-line rationale. Use best judgment
+Write the answer to `.orchestrate/<slug>/answers.md` with a one-line rationale. Use best judgment
 and move on.
 
 **Ask the user** when none of the above holds: a genuine product or design tradeoff, a
 missing requirement, a plan ambiguity with material consequences, or two or more defensible
 options where guessing risks rework. Present the question, the top options with tradeoffs,
-and your recommendation. Record the user's answer in `plans/<slug>-answers.md`.
+and your recommendation. Record the user's answer in `.orchestrate/<slug>/answers.md`.
 
 Question block (implementor appends):
 
@@ -231,7 +268,7 @@ Number questions `Q1`, `Q2`, ... sequentially across the whole run. Never reuse 
 Write the answers to the file first, then send this resume message to the implementor:
 
 ```
-Answers to your questions are in `plans/<slug>-answers.md`: <A ids>. Read them, treat each
+Answers to your questions are in `.orchestrate/<slug>/answers.md`: <A ids>. Read them, treat each
 as a binding decision, and continue this phase from where you stopped. Do not redo completed
 milestones. End with the same JSON block contract.
 ```
@@ -279,13 +316,13 @@ decides.
 **My recommendation**: <which option, one line why>
 ```
 
-Record the report and the CTO's eventual decision in `plans/<slug>-implementation-log.md`.
+Record the report and the CTO's eventual decision in `.orchestrate/<slug>/implementation-log.md`.
 
 ## Step 6: Finish
 
 After the last phase is reviewed:
 
-1. Read the full `plans/<slug>-implementation-log.md`.
+1. Read the full `.orchestrate/<slug>/implementation-log.md`.
 2. Run `git status --porcelain`. Every phase's work is uncommitted, so expect a dirty tree.
    Confirm that what is there is the plan's work and nothing else.
 3. Summarize for the user: phases completed, key files touched, review results, and questions
@@ -314,9 +351,9 @@ Milestones in scope (implement only these): <comma list, e.g. 1, 2, 3>
 ## Before you start
 1. Read `plans/<slug>.md` in full, then re-read the milestones in scope.
 2. Read the project's `CLAUDE.md` (or `AGENTS.md`).
-3. If `plans/<slug>-answers.md` is non-empty, read it. Treat every A<n> in it as a binding
+3. If `.orchestrate/<slug>/answers.md` is non-empty, read it. Treat every A<n> in it as a binding
    decision. Do not re-ask anything already answered.
-4. If `plans/<slug>-implementation-log.md` is non-empty, read it. Earlier phases were built by
+4. If `.orchestrate/<slug>/implementation-log.md` is non-empty, read it. Earlier phases were built by
    a different implementor and this log is the only record of what they did.
 
 ## While implementing
@@ -327,7 +364,7 @@ done.**
    that belongs to another phase.
 2. Run every `→ Verify:` check. Do not continue past a milestone whose verify check fails.
 3. If you hit a blocking ambiguity that the plan and the answers file do not resolve, STOP. Do
-   not guess. Append the question to `plans/<slug>-questions.md` using the question format
+   not guess. Append the question to `.orchestrate/<slug>/questions.md` using the question format
    below, then end with the blocked JSON block. You will be messaged back with the answer and
    can resume from where you stopped.
 4. If the plan conflicts with the codebase in a way that needs a product decision, that is a
@@ -340,6 +377,10 @@ done.**
    the reason.
 7. Verify framework and library APIs and versions against what is installed, not memory. Keep
    native dependencies aligned with the framework's expected versions.
+8. If you observe a context-pressure warning, save a checkpoint in the implementation log,
+   append a question to the questions file, and end with blocked status. Let the orchestrator
+   decide whether to continue or adjust scope. Report token counters only when available from
+   actual runtime telemetry; otherwise state that they are unavailable. Do not estimate them.
 
 ## Frontend
 Decide this yourself from the milestones in scope; do not wait to be told.
@@ -361,16 +402,16 @@ If this phase touches no Python, ignore this section and say "no Python in scope
 report.
 
 ## When the phase is complete
-1. Append a report to `plans/<slug>-implementation-log.md` using the report format below.
+1. Append a report to `.orchestrate/<slug>/implementation-log.md` using the report format below.
 2. End your final message with the done JSON block.
 
-## Question format (append to `plans/<slug>-questions.md`)
+## Question format (append to `.orchestrate/<slug>/questions.md`)
 ### Q<n>: <short title>
 Context: <what you were doing and why this blocks you>
 Question: <one clear question>
 Options considered: <options and tradeoffs, if any>
 
-## Report format (append to `plans/<slug>-implementation-log.md`)
+## Report format (append to `.orchestrate/<slug>/implementation-log.md`)
 ## Phase <label>: <name> (done)
 - Milestones completed: <list>
 - Files touched: <list>

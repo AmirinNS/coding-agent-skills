@@ -8,7 +8,7 @@ Three new capabilities and several refinements across the skills repo. The bigge
 
 ### orchestrate-implementation-claude
 
-Delegates phased plan implementation to fresh `phase-implementor` subagents (sonnet), one per phase. Same loop as `orchestrate-implementation` but runs entirely within Claude Code using `Agent` and `SendMessage`.
+Delegates phased plan implementation to fresh `phase-implementor` subagents (sonnet), one per phase. Same loop as `orchestrate-implementation-pi` but runs entirely within Claude Code using `Agent` and `SendMessage`.
 
 Key differences from the pi variant:
 - No external CLI required. No `pi --mode rpc`, no `pi-rpc.sh`.
@@ -36,7 +36,7 @@ Triggered by: "write the python", "implement the backend", "build the service la
 
 ## Updated Skills
 
-### orchestrate-implementation
+### orchestrate-implementation-pi
 
 - Added drift-check detail: stub detection, orphan module checks, claimed-item verification, build-check sanity, plan-rule grep.
 - Added "run it" step: when a phase ships an app, launch and drive the core flow before committing.
@@ -72,5 +72,5 @@ Triggered by: "write the python", "implement the backend", "build the service la
 
 ## Notes
 
-- The `orchestrate-implementation` (pi) and `orchestrate-implementation-claude` skills share the same conceptual loop but differ in mechanics. The `-claude` variant is the default for users without the pi CLI.
+- The `orchestrate-implementation-pi` and `orchestrate-implementation-claude` skills share the same conceptual loop but differ in mechanics. The `-claude` variant is the default for users without the pi CLI.
 - The `python-development` skill is referenced from the CLAUDE template, the scaffold template, and the orchestration dispatch prompt. It is the single source of depth for Python conventions.

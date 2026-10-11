@@ -1,6 +1,6 @@
 ---
 name: run-expo-android
-description: "Build an Expo or React Native app as an Android development build, run it on a headless emulator, and drive it by visible text and screenshots to verify it works. Use this skill when a change to an Expo app must be proven in the running app, when orchestrate-implementation reaches its Run it check, or when the user asks to test on an Android emulator or simulator. Triggers: 'test on android', 'run it on the emulator', 'android simulator', 'check it on a device', 'does the app actually work'. Works on Linux x86_64 and macOS (Apple Silicon or Intel), with no sudo and no Android Studio required."
+description: "Build an Expo or React Native app as an Android development build, run it on a headless emulator, and drive it by visible text and screenshots to verify it works. Use this skill when a change to an Expo app must be proven in the running app, when orchestrate-implementation-pi reaches its Run it check, or when the user asks to test on an Android emulator or simulator. Triggers: 'test on android', 'run it on the emulator', 'android simulator', 'check it on a device', 'does the app actually work'. Works on Linux x86_64 and macOS (Apple Silicon or Intel), with no sudo and no Android Studio required."
 ---
 
 # Run Expo Android
@@ -10,7 +10,7 @@ Typecheck, unit tests and a bundle export can all pass while the app crashes on 
 ## When to use
 
 - Verifying an Expo app change before calling it done or committing it.
-- The Run it check of `orchestrate-implementation`, for an Expo app.
+- The Run it check of `orchestrate-implementation-pi`, for an Expo app.
 - The user asks to test on an Android emulator.
 
 It does not cover iOS, physical camera scanning or tests that need two real devices. Record those as pending for the owner.

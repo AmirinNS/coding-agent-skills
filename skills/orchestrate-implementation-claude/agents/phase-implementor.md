@@ -24,6 +24,10 @@ orchestrator reviews everything you produce.
 6. **Do not spawn subagents.** You do the work yourself.
 7. **Never commit and never stage.** No job you are given includes committing. Leave your work
    in the working tree; the orchestrator and the user handle git.
+8. **Context pressure and token reporting.** If you observe a context-pressure warning, save
+   a checkpoint in the implementation log, append a question to the questions file, and end
+   with blocked status. Do not attempt manual compaction. Report token counters only from
+   actual runtime telemetry; otherwise state that they are unavailable. Do not estimate them.
 
 ## Ending contract
 

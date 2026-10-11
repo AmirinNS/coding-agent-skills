@@ -1,6 +1,6 @@
 # Coding Agent Skills
 
-A collection of Claude Code skills and guidelines for disciplined feature development. Designed to reduce over-engineering, enforce simplicity, and maintain a structured workflow from planning through documentation.
+A collection of coding agent skills and guidelines for feature development, direct tasks, and investigation. Includes delegation workflows for Codex, Claude Code, Antigravity, and pi.
 
 ## Structure
 
@@ -25,14 +25,43 @@ coding-agent-skills/
 │   ├── plan-feature/SKILL.md             # Create implementation plans
 │   ├── plan-review/SKILL.md          # Review and iterate on plans
 │   ├── implementation-review/SKILL.md # Review code for bugs and flaws
-│   ├── orchestrate-implementation/    # Delegate implementation to a persistent pi RPC session, phase by phase
-│   │   ├── SKILL.md                   #   orchestrator dispatches phases, runs review, compacts, document-and-commit
-│   │   ├── pi-rpc.sh                  #   helper to drive one persistent pi --mode rpc session
+│   ├── orchestrate-implementation-pi/    # Same loop, implementor is the pi CLI
+│   │   ├── SKILL.md                   #   fresh pi session per phase, back-and-forth via resume,
+│   │   │                              #   stops at review (no docs, no commits)
+│   │   ├── pi-rpc.sh                  #   helper to start, resume, compact, and stop one session per phase
+│   │   └── references/                #   pi CLI reference and worker troubleshooting
 │   ├── orchestrate-implementation-claude/ # Same loop, pure Claude Code, no external CLI
 │   │   ├── SKILL.md                   #   fresh phase-implementor subagent per phase, SendMessage for
 │   │   │                              #   questions, stops at review (no docs, no commits)
 │   │   └── agents/
 │   │       └── phase-implementor.md   #   sonnet subagent, copy to ~/.claude/agents/ to install
+│   ├── orchestrate-implementation-codex/ # Same loop, implementor is the Codex CLI (codex exec)
+│   │   ├── SKILL.md                   #   fresh Codex thread per phase, back-and-forth via resume,
+│   │   │                              #   stops at review (sandbox keeps .git read-only, no commits)
+│   │   └── codex-exec.sh              #   helper to start, resume, and stop one thread per phase
+│   ├── orchestrate-implementation-agy/   # Same loop, implementor is the Antigravity CLI (agy)
+│   │   ├── SKILL.md                   #   fresh agy conversation per phase, back-and-forth via resume,
+│   │   │                              #   stops at review (no docs, no commits)
+│   │   ├── agy-exec.sh                #   helper to start, resume, and stop one conversation per phase
+│   │   ├── check.sh                   #   runnable check
+│   │   └── references/                #   agy CLI reference, subagents, and troubleshooting
+│   ├── delegate-work-codex/          # Delegate tasks or discussion from a request, no plans/ dependency
+│   │   ├── SKILL.md                   #   task brief, same-thread discussion, independent review, no commits
+│   │   └── codex-exec.sh              #   standalone helper, one thread per bounded assignment
+│   ├── delegate-work-agy/            # Same loop, delegate tasks directly using Antigravity CLI (agy)
+│   │   ├── SKILL.md                   #   task brief, same-conversation replies, independent review, no commits
+│   │   ├── agy-exec.sh                #   standalone helper, one conversation per bounded assignment
+│   │   ├── check.sh                   #   runnable check
+│   │   ├── references/                #   agy CLI reference, subagents, and troubleshooting
+│   │   └── tests/                     #   mocked helper checks, runnable without the agy CLI
+│   ├── delegate-work-pi/             # Same loop, delegate tasks directly using the pi CLI
+│   │   ├── SKILL.md                   #   task brief, same-session replies, independent review, no commits
+│   │   ├── pi-work.sh                 #   standalone helper, one session per bounded assignment
+│   │   ├── references/                #   pi CLI reference and worker troubleshooting
+│   │   └── tests/                     #   mocked helper checks, runnable without the pi CLI
+│   ├── delegate-work-claude/         # Delegate direct tasks or discussion to Claude subagents
+│   │   ├── SKILL.md                   #   one subagent per assignment, same-thread discussion, no commits
+│   │   └── agents/                    #   task-worker subagent definition
 │   ├── run-expo-android/             # Build an Expo app, run it on an Android emulator, drive it by text and screenshots
 │   │   ├── SKILL.md                   #   Linux x86_64 and macOS (Apple Silicon or Intel), no sudo
 │   │   └── scripts/                   #   setup, emulator, build, metro, tap, shot, fields, crash
@@ -126,8 +155,86 @@ flowchart TD
 | **1. Planning** | `plan-feature` | Creates a focused implementation plan in `plans/` |
 | **2. Analysis** | `plan-review` | Reviews the plan for flaws, over-engineering, feasibility. Run multiple times — each pass logs changes to the plan file |
 | **3. Design** | `frontend-design` / `frontend-bootstrap-evolution` / `python-development` | `frontend-design` for UI work, `python-development` for Python. A phase can need both. Other backend work follows CLAUDE.md guidelines directly |
-| **4. Implementation** | `orchestrate-implementation-claude` (or `orchestrate-implementation` for pi) → `implementation-review` → `document-and-commit` | Delegate phased implementation to an implementor, then review. The `-claude` variant spawns a fresh sonnet `phase-implementor` subagent per phase, needs no external CLI, and stops at review: it never commits, so the whole run is left uncommitted and you call `document-and-commit` yourself at the end. The pi variant uses one persistent `pi --mode rpc` session and commits once per phase. For an Expo app, the review runs the app on an emulator with `run-expo-android`. `document-and-commit` combines `create-docs` and `generate-commit` |
+| **4. Implementation** | `orchestrate-implementation-claude` (or `orchestrate-implementation-agy` for agy, `orchestrate-implementation-codex` for Codex, `orchestrate-implementation-pi` for pi) → `implementation-review` → `document-and-commit` | Delegate phased implementation to an implementor, then review. The `-claude` variant spawns a fresh sonnet `phase-implementor` subagent per phase, needs no external CLI, and stops at review: it never commits, so the whole run is left uncommitted and you call `document-and-commit` yourself at the end. The `-agy` variant runs the same loop with the Antigravity CLI (agy): one fresh conversation per phase, back-and-forth exchanges through `agy-exec.sh resume`, and stops at review leaving work uncommitted. The `-codex` variant runs the same loop with the Codex CLI: one `codex exec` thread per phase, questions and replies go back and forth through `codex exec resume`, and the `workspace-write` sandbox keeps `.git` read-only so nothing is committed. The pi variant runs the same loop with the pi CLI: one fresh session per phase, back-and-forth exchanges through `pi-rpc.sh resume`, and stops at review leaving work uncommitted. For an Expo app, the review runs the app on an emulator with `run-expo-android`. `document-and-commit` combines `create-docs` and `generate-commit` |
 | **5. Maintenance** | `fix-bug` | Reproduce-first bug fixing. Skips phases 1-3 |
+
+## Delegating work and discussion
+
+Use `delegate-work-codex`, `delegate-work-agy`, `delegate-work-pi`, or `delegate-work-claude`
+for a direct task without a `plans/` folder or plan file. These skills support fixes,
+refactors, investigations, and requested document edits. The main session owns scope, questions,
+review, and verification. Changes remain uncommitted.
+
+Use `orchestrate-implementation-<agent>` to implement an existing approved plan by phase.
+For each agent, the plan gate runs before dispatch or project changes. If no readable approved
+plan is available, it stops that workflow and recommends `delegate-work-<agent>`.
+An unrelated `plans/` folder does not select plan implementation.
+
+The direct task skills also explicitly support discussion with a worker. The orchestrator
+can ask for a second opinion, challenge assumptions, and resume the same thread or session
+for follow-up questions. Discussion defaults to no product edits and does not authorize
+implementation.
+
+Example invocation:
+
+```text
+Use $delegate-work-agy to fix the search pagination bug. Preserve the existing API
+and verify the affected flow. Do not commit.
+
+Use $delegate-work-agy to discuss whether this architecture handles worker crashes.
+Compare alternatives and challenge assumptions. Do not implement changes.
+
+Use $delegate-work-codex to discuss this design with Codex. Challenge its assumptions
+and compare alternatives. Do not implement changes.
+
+Use $orchestrate-implementation-agy to implement the approved plan at
+plans/search-pagination.md. Do not commit.
+
+Use $orchestrate-implementation-codex to implement the approved plan at
+plans/search-pagination.md. Do not commit.
+```
+
+Exact invocation syntax depends on the host and requires the skill to be available there.
+Plain-language routing depends on the requested work. "Delegate implementation based on
+this approved plan" fits plan implementation; "discuss this plan" fits discussion.
+
+The Codex skills require a checkpoint and blocked report when the worker observes a
+context-pressure warning. The orchestrator decides whether to request manual compaction
+through a supported mechanism. Automatic runtime compaction can still occur. The current
+Codex helpers capture usage events but expose no manual compaction command and do not
+aggregate token totals. At the checked release, usage events carry thread-total snapshots.
+Preserve the latest reliable total per thread instead of summing snapshots across resumes.
+
+pi is the one agent here with a verified manual compaction mechanism: the helpers send
+`{"type":"compact"}` over the RPC session, with optional custom instructions, and the worker
+reloads the handoff records afterwards. Automatic compaction still fires near the context
+limit before any warning, so a prompt instruction gives no veto over it.
+
+The Codex CLI help baseline is `codex-cli 0.162.1`, checked on 2026-10-11. Both helpers
+record the actual CLI version and command path for each turn so failures can be traced
+to the installed release. Version differences prompt a help check, without automatic
+upgrades or downgrades.
+
+The same release was confirmed as latest stable on 2026-10-11. See the
+[Codex maintenance record](skills/delegate-work-codex/references/codex-cli-reference.md#maintenance-review-2026-10-11)
+for official release sources, help checks, mocked checks, and unverified live behavior.
+
+The Antigravity CLI help baseline is `1.3.3`, checked on 2026-10-11. Both helpers
+record the actual CLI version and command path for each turn under temporary helper state.
+Copy them into the work log or implementation log. Version differences prompt a help check
+against installed `agy --help` without automatic upgrades or downgrades.
+
+The pi CLI help baseline is `0.85.1`, checked on 2026-10-11 at `/opt/homebrew/bin/pi`. Both
+helpers record the actual CLI version and command path for each executed turn under
+temporary helper state, and a failed version capture stops the turn instead of dispatching
+the worker. Copy them into the work log or implementation log before another turn overwrites
+them or `stop` removes them. Version differences prompt a help check against installed
+`pi --help` without automatic upgrades or downgrades.
+
+See the [delegation guide](docs/delegation.md) for current agent differences, handoffs,
+compaction, token reporting, and troubleshooting. Use the
+[skill creation prompt](docs/delegation-skill-creation-prompt.md) to create missing variants
+or update outdated ones against the Codex baseline.
 
 ## CLAUDE.md
 
@@ -142,6 +249,26 @@ The `CLAUDE.md` file provides behavioral guidelines that apply across all steps:
 ## Installation
 
 Pick the instructions for your tool:
+
+### Antigravity (agy CLI and IDE)
+
+```bash
+# 1. Global behavioral guidelines (applied to every project)
+mkdir -p ~/.gemini/config
+cp CLAUDE.md ~/.gemini/config/AGENTS.md
+
+# 2. Global skills (available in every project)
+mkdir -p ~/.gemini/config/skills
+for dir in skills/*/; do ln -s "$(realpath "$dir")" ~/.gemini/config/skills/; done
+
+# 3. Per-project config (fill in the template)
+cp CLAUDE-template.md /path/to/your-project/AGENTS.md
+```
+
+Skills auto-discover at startup. Or configure paths:
+- Context file: `~/.gemini/config/AGENTS.md` (or `GEMINI.md`)
+- Global skills: `~/.gemini/config/skills/<skill-name>/`
+- Project skills: `.agents/skills/<skill-name>/` (or `.gemini/skills/`)
 
 ### pi
 
@@ -257,6 +384,25 @@ your-project/
 OpenCode uses `AGENTS.md` as the primary file name. It falls back to `CLAUDE.md` if no `AGENTS.md` exists. If using both tools, keep `CLAUDE.md` — OpenCode will pick it up as fallback.
 
 User-level (all projects): `~/.config/opencode/AGENTS.md`
+
+#### Antigravity (agy CLI and IDE)
+
+```
+your-project/
+├── AGENTS.md                    # Project-specific (from CLAUDE-template.md)
+└── .agents/
+    └── skills/                  # Project skills copied or symlinked here
+```
+
+Antigravity loads rules (`AGENTS.md` or `GEMINI.md`) walking up the directory tree to the workspace root. Global configurations in `~/.gemini/config/` apply to all workspaces on the machine.
+
+| What | Antigravity Location | Notes |
+|------|----------------------|-------|
+| Global instructions | `~/.gemini/config/AGENTS.md` | Also accepts `GEMINI.md` |
+| Project instructions | `AGENTS.md` / `GEMINI.md` in cwd & ancestors | Auto-discovered |
+| Global skills | `~/.gemini/config/skills/` | Discovers directories containing `SKILL.md` |
+| Project skills | `.agents/skills/` or `.gemini/skills/` | Scanned from repository root |
+| One-off execution | helper scripts or `invoke_subagent` | Process isolation via `agy-exec.sh` |
 
 #### Other Tools
 
