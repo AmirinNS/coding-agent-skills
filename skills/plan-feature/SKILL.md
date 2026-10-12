@@ -52,6 +52,27 @@ Classify the change as **small**, **medium**, or **large**:
 
 If unsure, default to small. The user can ask for more detail.
 
+## Step 2.5: UI Check (Prototype or Not)
+
+Skip this step if the feature touches no UI (pages, screens, components, templates, styling).
+
+If it does, decide whether the UI needs a prototype before implementation. Read `DESIGN.md` (repo root or `docs/`) and check `design/<feature>/DECISIONS.md` first: if an approved prototype already exists, the plan builds to it.
+
+| UI change | Prototype |
+|-----------|-----------|
+| **Simple**: a field, column, button, filter, copy or style tweak, a new item in an existing list or menu, a component already in DESIGN.md | **not needed** |
+| **Medium**: a new section or component on an existing screen, with an obvious layout | **not needed** (frontend-design builds it and explains its design choices) |
+| **Big or new**: a new screen or flow, a new product with no DESIGN.md, a layout with real alternatives (table vs. cards, tabs vs. stepper, modal vs. page), a high-stakes flow (money movement, checkout, onboarding, destructive actions) | **required** |
+
+If it's borderline, ask the user, and record the answer in the Decisions Log.
+
+When the prototype is **required**:
+- Name the **design question** it must answer (e.g. "table or cards for the deals list?", "how many steps in checkout?"). A prototype without a question is ceremony.
+- Write the UI steps in Approach against the spec: "Build `<screen>` per `design/<feature>/DECISIONS.md`". Don't invent layout details the prototype will decide.
+- If the user can't yet say what the UI should do at all (not just how it looks), suggest prototyping *before* planning, then come back to plan.
+
+Prototyping happens in the main session with the user, not inside an implementation phase: implementor subagents can't hold an approval gate.
+
 ## Step 3: Write the Plan
 
 ### Lightweight Template (small changes)
@@ -71,6 +92,13 @@ Step-by-step implementation:
 1. [Step] — [what file/module, what change]
 2. [Step] — [what file/module, what change]
 3. [Step] — [what file/module, what change]
+
+## UI / Design
+_Omit if no UI._
+- Prototype: <required | approved | not needed> — <one-line reason>
+- Design question: <what the prototype must answer; only if required>
+- Design spec: follows `DESIGN.md`; build to `design/<feature>/DECISIONS.md` once approved
+- Screens/components affected: ...
 
 ## Affected Files
 - Files to modify: ...
@@ -115,6 +143,13 @@ Step-by-step implementation broken into milestones:
 1. [Step] — [what file/module, what change]
 2. [Step] — [what file/module, what change]
 → Verify: [how to confirm this milestone works]
+
+## UI / Design
+_Omit if no UI._
+- Prototype: <required | approved | not needed> — <one-line reason>
+- Design question: <what the prototype must answer; only if required>
+- Design spec: follows `DESIGN.md`; build to `design/<feature>/DECISIONS.md` once approved
+- Screens/components affected: ...
 
 ## Affected Files
 - Files to modify: ...
@@ -170,6 +205,7 @@ For test-driven steps in the Full Template, follow red → green → commit cade
 
 1. Save the plan to `plans/<feature-name>.md`.
 2. Present a summary to the user for approval.
+   - If `Prototype: required`, say so in the summary and name the next step: after plan review, run `prototype-ui` to answer the design question, then implement. `prototype-ui` marks the plan `Prototype: approved` and points its UI steps at `design/<feature>/DECISIONS.md`.
 3. Suggest starting a new conversation for implementation to keep context clean.
 4. Remind the implementer: **read the plan file including the review log before coding.** The review log tracks what was changed and why across review iterations — this context is critical for implementation.
 
@@ -183,6 +219,7 @@ For test-driven steps in the Full Template, follow red → green → commit cade
 - Push back if the feature seems over-scoped. Suggest a smaller first version.
 - **Large change rule:** split large work into phased plans with clear milestones. Each phase should be independently shippable.
 - If existing code already solves part of the problem, say so — don't re-invent.
+- **Prototype only big or new UI.** Simple and medium UI changes get `Prototype: not needed`; don't add design ceremony to a button.
 - **When in doubt, ask.** If there are multiple viable approaches and you can't confidently determine the best one — or the number of reasonable choices is large enough that picking silently feels like a gamble — present the top options with tradeoffs and let the user decide before proceeding.
 - **Every question you ask the user becomes a Decisions Log row.** When you present options and the user picks one, record it: the *Alternatives Considered* column holds **all** the options you offered (not just the runner-up), *Chosen* is the user's pick, and *Why* is their stated reason. If they gave no reason, write "user preference" rather than inventing one. This preserves the options you offered even when the choice was the user's, not yours.
 - **Log every non-trivial choice in the Decisions Log.** Whenever you pick between alternatives — libraries, patterns, data models, API designs — record what was chosen, what was considered, and why. This applies to choices you make silently *and* to questions the user answered. This lets the user revisit decisions later or pivot quickly if requirements change.

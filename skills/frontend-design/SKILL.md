@@ -1,6 +1,6 @@
 ---
 name: frontend-design
-description: "Implement distinctive, production-grade frontend interfaces with high design quality. ONLY for frontend features involving UI, pages, or components — do NOT trigger for backend-only work. Use after the plan is reviewed and approved. Triggers: 'build the frontend', 'implement the UI', 'build this page', 'create the component', 'implement the design'. Do NOT trigger on: API endpoints, database changes, pipeline logic, or backend-only features."
+description: "Implement distinctive, production-grade frontend interfaces that fit the product's domain, its target audience, the project's DESIGN.md, and the user's taste. Builds directly for simple additions; for big or new UI, recommends prototyping first with prototype-ui, and implements to an approved prototype when one exists. ONLY for frontend features involving UI, pages, or components — do NOT trigger for backend-only work. Use after the plan is reviewed and approved. Triggers: 'build the frontend', 'implement the UI', 'build this page', 'create the component', 'implement the design', 'add this to the UI'. Do NOT trigger on: API endpoints, database changes, pipeline logic, backend-only features, or requests to prototype/wireframe/mock up (use prototype-ui)."
 ---
 
 # Frontend Design
@@ -8,94 +8,117 @@ description: "Implement distinctive, production-grade frontend interfaces with h
 You are the designer of record for this interface. Every choice of font, palette, layout,
 motion, and spacing must be defensible in one sentence naming what it does for the user. Work
 that reads as a template with the content swapped is rejected, however clean it looks. So is
-work that is visually loud but leaves a state undefined.
+work that is visually loud but leaves a state undefined. So is work that is "distinctive" but
+not what the user would have chosen: **the user's taste beats your taste.**
 
-This skill implements **frontend-only** features with distinctive, production-grade aesthetics that avoid generic "AI slop." Only use when the feature involves UI work (pages, components, styles, layouts). For backend-only features, skip this skill and implement directly using CLAUDE.md guidelines.
+This skill **builds** UI. Exploring options with wireframes and clickable prototypes lives in
+the separate `prototype-ui` skill, used only when a feature is big or new enough to need it.
+Simple additions are built directly.
 
-It sits between plan review and implementation review in the workflow:
+This skill covers **frontend-only** features. For backend-only features, skip this skill and implement directly using CLAUDE.md guidelines.
 
 ```
-Planning → Review Plan (5x) → **Frontend Design (implement)** → Review Implementation (2x) → Create Docs → Commit
+Planning → Review Plan (5x) → [prototype-ui, only for big/new UI] → **Frontend Design (build)** → Review Implementation (2x) → Create Docs → Commit
 ```
 
-> **Note:** This is a design implementation skill. The CLAUDE.md simplicity rules apply to engineering logic (data flow, state, API calls). Aesthetic code (animations, layouts, visual effects) follows the design guidelines below — complexity here serves the user experience, not the architecture.
+> **Note:** CLAUDE.md simplicity rules apply to engineering logic (data flow, state, API calls). Aesthetic code (layouts, motion, visual effects) follows this skill — but every effect must earn its place.
 
-## Step 1: Read the Plan and Review Log
+**Shared references** (read before designing anything; `prototype-ui` uses the same files):
+- `references/design-rules.md`: typography, color, spacing, components, motion, intensity, AI-slop defaults to avoid
+- `references/domain-audience-playbook.md`: what banking, trading, CRM, healthcare… and different audiences need
+- `references/design-md-template.md`: the DESIGN.md format
 
-Before writing any code:
-1. Read the approved plan file in `plans/` — understand the goal, scope, and affected files.
-2. Read the **review log** at the bottom of the plan — understand what changed during review and why. Don't re-introduce things that were cut.
-3. Read existing code that will be modified — match patterns, understand conventions.
+## Step 1: Context
+
+1. Read the approved plan in `plans/`: goal, scope, affected files.
+2. Read the **review log** at the bottom of the plan. Don't re-introduce things that were cut.
+3. Read existing code that will be modified. Match patterns, components, and conventions.
+4. Look for **`DESIGN.md`** (repo root or `docs/`). If it exists, it is **binding**: tokens, components, do's and don'ts, decision log, and the user's recorded likes/dislikes.
+5. Look for an **approved prototype** for this feature: `design/<feature>/DECISIONS.md` (written by `prototype-ui`). If it exists, it is the spec. Implement to it.
+6. Identify the **product context** from the plan, DESIGN.md, README, or code:
+   - **Domain**: banking, trading, CRM, healthcare, e-commerce, education, social, productivity, game…
+   - **Target audience**: who uses it, age range, expertise, usage context, frequency, locale
+   - **Core job**: what users must do fastest or trust most in this feature
+   Apply the matching entries from the playbook. If domain or audience is unknown and not in DESIGN.md, ask once (or assume, and say so).
 
 If no plan exists, ask: "Is there an approved plan for this feature?"
 
-## Step 2: Design Thinking
+## Step 2: Prototype or build directly?
 
-Before coding, understand the context and commit to a BOLD aesthetic direction:
-- **Purpose**: What problem does this interface solve? Who uses it?
-- **Tone**: Pick an extreme: brutally minimal, maximalist chaos, retro-futuristic, organic/natural, luxury/refined, playful/toy-like, editorial/magazine, brutalist/raw, art deco/geometric, soft/pastel, industrial/utilitarian, etc. There are so many flavors to choose from. Use these for inspiration but design one that is true to the aesthetic direction.
-- **Constraints**: Technical requirements (framework, performance, accessibility).
-- **Differentiation**: What makes this UNFORGETTABLE? What's the one thing someone will remember?
+Decide how much design work this feature needs. Don't make the user sit through a prototype for a button.
 
-**CRITICAL**: Choose a clear conceptual direction and execute it with precision. Bold maximalism and refined minimalism both work — the key is intentionality, not intensity.
+| Situation | What to do |
+|-----------|-----------|
+| Approved prototype exists (`design/<feature>/DECISIONS.md`) | **Build to it.** Go to Step 4. |
+| User said "just build it" / "no prototype" | **Build directly.** |
+| **Simple addition** that fits existing patterns: a field, column, button, filter, copy or style tweak, a new item in an existing list/menu, a component already in DESIGN.md, a bug fix | **Build directly.** |
+| **Medium**: a new section or component on an existing screen, with an obvious layout | **Build directly**, and include design notes (Step 6). |
+| **Big or new**: a new screen or flow, a new product with no DESIGN.md, a layout with real alternatives (table vs. cards, tabs vs. stepper), a high-stakes flow (money movement, checkout, onboarding, destructive actions), or the plan says `Prototype: required` | **Recommend `prototype-ui` first.** Ask once: "This is a new [flow/screen]. Want a quick prototype with design options first, or should I build it directly?" Respect the answer. |
 
-## Step 3: UX Behavior
+When the user isn't around to answer (unattended run, or inside an implementor subagent such as a phase of `orchestrate-implementation-*`): never block on a prototype. Build directly following DESIGN.md, and list every design decision you made in your summary or phase report so the user can redirect.
 
-Aesthetics cover the happy path. Decide the rest before writing any CSS. For every screen or component in scope, state what it does in each condition:
+## Step 3: Direction (only when there's no DESIGN.md)
+
+If DESIGN.md exists, follow it. Only extend it when the feature truly needs something the system lacks (e.g. a new component), described in the system's own language.
+
+If there's no DESIGN.md and the user chose to build directly:
+1. Ask one round (max 4 questions): domain/audience if unclear, 1–3 reference apps/sites they like, what they dislike, fixed constraints (brand colors, fonts, platform).
+2. Pick the direction closest to their references; if none, the domain-standard look from the playbook.
+3. Write `DESIGN.md` from the template, show the token list in a few lines, and note that `prototype-ui` or `design-critique` can explore alternatives later.
+
+## Step 4: UX Behavior
+
+Decide the non-happy paths before writing CSS. If an approved prototype exists, take them from it. For every screen or component in scope:
 
 - **Empty**: no data yet, or a filter matched nothing. What does the user see, and what is the next action?
 - **Loading**: skeleton, spinner, or optimistic render. Never an unexplained blank region.
 - **Error**: what failed, whether the user can retry, and what they lose if they don't.
-- **Success**: how a completed action confirms itself without a full page reload jolt.
+- **Success**: how a completed action confirms itself without a jarring reload.
 
-Also settle these where they apply:
+Also settle where they apply:
+- **Forms**: validation on blur (not every keystroke), message placement, submit state during requests.
+- **Destructive actions**: confirmation naming the specific thing, or an undo window.
+- **Navigation**: where this screen sits, how the user got here, how they get back.
+- **Keyboard and focus**: tab order follows visual order, focus visible, focus trapped in and returned from modals/drawers.
 
-- **Forms**: when validation fires (on blur, not on every keystroke), where the message sits relative to the field, and what the submit button does while the request is in flight.
-- **Destructive actions**: a confirmation step that names the specific thing being destroyed, or an undo window instead.
-- **Navigation**: where this screen sits in the app, how the user got here, and how they get back.
-- **Keyboard and focus**: tab order follows visual order, focus is visible against the chosen palette, and focus moves into any modal or drawer and returns on close.
+For a simple addition, this can be one line ("inherits the list's existing empty/loading/error states").
 
-Write this out as a short list before Step 4. Any state you skip here becomes a blank screen or a dead end in the shipped build.
+## Step 5: Implement
 
-## Step 4: Implement
+Build production code following the plan's approach and affected files. Don't add scope beyond what was approved.
 
-Build working code (HTML/CSS/JS, React, Vue, etc.) that is:
-- Production-grade and functional
-- Visually striking and memorable
-- Cohesive with a clear aesthetic point-of-view
-- Meticulously refined in every detail
+- Follow `references/design-rules.md` and the playbook entries for this domain and audience.
+- Use DESIGN.md tokens only: no stray hex values, font sizes, or spacing.
+- Reuse existing components; extract new shared ones only when needed.
+- **With an approved prototype**: match it. If implementation forces a visible change (technical limit, missing data, performance), flag it with the reason instead of silently deviating. Ask before making any design decision the prototype didn't cover.
 
-Follow the plan's approach steps and affected files. Don't add scope beyond what was approved.
+## Step 6: Visual self-review and design notes
 
-### Frontend Aesthetics Guidelines
+Functional checks don't catch mediocre design. Before handoff:
 
-Focus on:
-- **Typography**: Choose fonts that are beautiful, unique, and interesting. Avoid generic fonts like Arial and Inter; opt instead for distinctive choices that elevate the frontend's aesthetics — unexpected, characterful font choices. Pair a distinctive display font with a refined body font.
-- **Color & Theme**: Commit to a cohesive aesthetic. Use CSS variables for consistency. Dominant colors with sharp accents outperform timid, evenly-distributed palettes.
-- **Motion**: Use animations for effects and micro-interactions. Prioritize CSS-only solutions for HTML. Use Motion library for React when available. Focus on high-impact moments: one well-orchestrated page load with staggered reveals (animation-delay) creates more delight than scattered micro-interactions. Use scroll-triggering and hover states that surprise.
-- **Spatial Composition**: Unexpected layouts. Asymmetry. Overlap. Diagonal flow. Grid-breaking elements. Generous negative space OR controlled density.
-- **Backgrounds & Visual Details**: Create atmosphere and depth rather than defaulting to solid colors. Add contextual effects and textures that match the overall aesthetic. Apply creative forms like gradient meshes, noise textures, geometric patterns, layered transparencies, dramatic shadows, decorative borders, custom cursors, and grain overlays.
+1. **Render and screenshot** the affected screens at mobile (~390px) and desktop (~1440px) widths.
+2. **Score 1–10**: fit for domain & audience, hierarchy, typography, color/contrast, spacing, consistency with the rest of the app, platform fit, match to DESIGN.md (and the prototype, if any). Check for slop tells and domain pitfalls.
+3. **Fix the top 3 issues** in one batch. Re-check once. Stop when nothing scores below 7, or after 2 rounds, noting what's still weak. No open-ended polish loops.
+4. **Design notes**: for medium and big features built without a prototype, list 2–5 key decisions in your summary, one line each with the reason (e.g. "Deals shown as a sortable table, not cards: sales reps compare many at once"). Skip for simple additions.
 
-NEVER use generic AI-generated aesthetics like overused font families (Inter, Roboto, Arial, system fonts), cliched color schemes (particularly purple gradients on white backgrounds), predictable layouts and component patterns, and cookie-cutter design that lacks context-specific character.
+When the user reacts, record lasting preferences in DESIGN.md (**Decision log**, **Likes / Dislikes**).
 
-Interpret creatively and make unexpected choices that feel genuinely designed for the context. No design should be the same. Vary between light and dark themes, different fonts, different aesthetics. NEVER converge on common choices (Space Grotesk, for example) across generations.
+## Step 7: Verify
 
-**IMPORTANT**: Match implementation complexity to the aesthetic vision. Maximalist designs need elaborate code with extensive animations and effects. Minimalist or refined designs need restraint, precision, and careful attention to spacing, typography, and subtle details. Elegance comes from executing the vision well.
-
-## Step 5: Verify
-
-After implementation, check before handing off to review:
-- [ ] Every state declared in Step 3 renders — force each one, don't assume
-- [ ] Renders correctly in browser — no broken layouts or missing assets
-- [ ] Responsive — works on mobile, tablet, and desktop viewports
-- [ ] Interactive elements work — buttons, links, hover states, animations trigger correctly
-- [ ] Matches the plan's acceptance criteria
+- [ ] Every state declared in Step 4 renders. Force each one; don't assume
+- [ ] Renders correctly: no broken layouts or missing assets
+- [ ] Responsive: mobile, tablet, desktop
+- [ ] Interactive elements work: buttons, links, hover/pressed states, animations
+- [ ] Matches the plan's acceptance criteria (and the approved prototype, if any: compare screenshots side by side)
 - [ ] No console errors or warnings
-- [ ] Accessibility basics — keyboard navigation, sufficient contrast, semantic HTML
+- [ ] Accessibility: keyboard navigation, visible focus, contrast, semantic HTML, reduced motion, font scaling
+- [ ] Only DESIGN.md tokens used
 
 ## Rules
-- Read the plan and review log before writing any code.
-- Follow the plan's scope — don't add pages, components, or features that weren't approved.
-- Aesthetic complexity is encouraged. Engineering complexity follows CLAUDE.md (keep it simple).
-- Push for extraordinary creative work. Don't hold back — show what can truly be created when thinking outside the box and committing fully to a distinctive vision.
-- If the plan doesn't specify a design direction, propose one to the user before implementing.
+- Read the plan, review log, DESIGN.md, any approved prototype, and the shared references before writing code.
+- Match the process to the size of the change: simple additions are built directly; only big or new UI gets a prototype recommendation.
+- Never block on an approval you can't get. Build, then list your design decisions.
+- Follow the plan's scope: no extra pages, components, or features.
+- Priority order: product domain & audience needs → approved prototype, DESIGN.md and the user's taste → your own aesthetic preferences.
+- Aesthetic code may be elaborate; engineering logic follows CLAUDE.md (keep it simple).
+- Never hand off screens you haven't looked at.
