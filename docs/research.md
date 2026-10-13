@@ -25,3 +25,26 @@
 - Wire `steer` into the drift halt so a phase can be stopped the moment drift is spotted, rather than waiting for the turn to settle before the Step 3.5 check runs.
 - Have `stop` copy `events.jsonl` next to the plan before removing the state directory, if the tool-call detail turns out to be worth keeping.
 - Decide whether the questions-file handoff should stay as-is or move to a `follow_up`-based channel now that mid-turn messaging is confirmed working.
+
+## 2026-10-13 — Swarm smoke runs (delegate-work-swarm, orchestrate-implementation-swarm)
+
+**Context:** Plan `plans/swarm-orchestration.md`, Milestones 4 and 6. Two scratch Git repos, real CLIs: codex-cli 0.162.1 (gpt-6.1-sol), agy 1.3.3 (default model), pi 0.85.1. Direct-task run: 7 assignments in 3 waves. Plan run: a two-phase plan, three milestones.
+
+**Findings:**
+
+- Same-agent concurrency works. Two pi sessions, then two agy sessions plus one Codex session, ran at once in one repo with separate ids and outputs. The one-worker-per-agent fallback was not needed.
+- pi does not exit 1 on provider errors. On `429 quota exhausted` (xiaomi/mimo-v2.6-flash) and on `Connection error.` (stepfun, DNS SERVFAIL for api.stepfun.ai), pi retried by itself, then `pi-work.sh` exited 0 with an empty reply. The cause sits in `events.jsonl` as assistant messages with `"stopReason":"error"` and an `errorMessage`. The swarm rules now treat any turn without final JSON as unsuccessful and list provider outages under "unavailable".
+- The unavailability rule worked as written twice. Both times pi's work was held, agy kept running, and the user was asked once; the user chose another pi model each time. Model switches were done with `PI_ORCH_MODEL` on the helper command, leaving `~/.pi/agent/settings.json` untouched.
+- A stub `agy` printing a daily-quota 429 makes `agy-exec.sh` exit 1 with the message in `err.log` and no `conversation_id` saved, which confirms an interrupted first agy turn cannot be resumed.
+- `restore` had a real bug the unit tests missed: it treated the assignment's handoff directory as owned changes, deleting `prompt.md`, and it failed on its own saved copies under `.orchestrate/`. Fixed (restore skips `.orchestrate/`) with test case 12b.
+- The reported-versus-changed check flagged a planted edit in a file whose owner reported nothing. It cannot see a second writer inside a file the owner also changed; only diff review catches that.
+- `pi --list-models <name>` is a fuzzy search (`step-5` listed `step-3.5-flash` first). Read the row whose provider and model match exactly.
+- Capability routing held: with pi on a text-only model, the image task went to agy, and agy's alt text matched the chart.
+- Codex as a read-only reviewer found two real policy gaps in agy's parser (Unicode digits and tab/newline separators accepted); all 15 sampled claims reproduced.
+- The escalation path worked, but was forced: pi (deepseek-flash) passed the strict Roman numeral test, so no reasoning failure occurred naturally. Codex honoured the new "do not read partial/" line, excluding `partial/` from every search.
+- `__pycache__` files show up as `UNOWNED` in repos without a `.gitignore` entry. They are allowed as generated artifacts, but add noise to every `attribute` call.
+
+**Open questions / next steps:**
+
+- Classifying slip versus reasoning failure is still orchestrator judgment; no natural reasoning failure occurred in these runs.
+- Git submodules are not handled by `swarm-files.sh`.
