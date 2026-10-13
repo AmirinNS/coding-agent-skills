@@ -131,7 +131,7 @@ If "it just doesn't feel right," offer 2–3 targeted variations of the one elem
 
 Deliver:
 1. The final design (and other screens in the same style if asked)
-2. A **DESIGN.md** (from the shared `design-md-template.md`): Product & Audience, vibe paragraph, tokens as a list and as CSS variables, component rules, domain-specific rules (number formatting, confirmation patterns, positive/negative colors), do's and don'ts, decision log, and the user's likes/dislikes. This is the binding design system for future screens.
+2. A **DESIGN.md** (from the shared `design-md-template.md`): Product & Audience, vibe paragraph, tokens as a list and as CSS variables, component rules, domain-specific rules (number formatting, confirmation patterns, positive/negative colors), do's and don'ts, decision log, and the user's likes/dislikes. This is the binding design system for future screens. If a DESIGN.md already exists, show the differences and ask before replacing anything.
 3. A **ready-to-paste prompt** for any AI tool: platform, domain, audience, guideline (HIG / Material 3), "follow DESIGN.md", layout, what to avoid, what must stay.
 
 ---
