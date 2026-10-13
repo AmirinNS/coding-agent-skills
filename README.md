@@ -62,6 +62,13 @@ coding-agent-skills/
 │   ├── delegate-work-claude/         # Delegate direct tasks or discussion to Claude subagents
 │   │   ├── SKILL.md                   #   one subagent per assignment, same-thread discussion, no commits
 │   │   └── agents/                    #   task-worker subagent definition
+│   ├── delegate-work-swarm/          # Split a direct task across Codex, agy, and pi, run in parallel
+│   │   ├── SKILL.md                   #   routes by task level and agent ranking, waves, independent review, no commits
+│   │   ├── swarm-files.sh             #   snapshot, attribute, overlap, and restore file ownership in a shared Git tree
+│   │   ├── references/swarm-rules.md  #   routing, pi model ranks, escalation, unavailability, drift (shared)
+│   │   └── tests/                     #   helper checks against throwaway Git repos, no agent CLI needed
+│   ├── orchestrate-implementation-swarm/ # Same swarm, phase by phase over an approved plan
+│   │   └── SKILL.md                   #   milestones in a phase run in parallel waves, phase review, CTO report
 │   ├── run-expo-android/             # Build an Expo app, run it on an Android emulator, drive it by text and screenshots
 │   │   ├── SKILL.md                   #   Linux x86_64 and macOS (Apple Silicon or Intel), no sudo
 │   │   └── scripts/                   #   setup, emulator, build, metro, tap, shot, fields, crash
@@ -180,6 +187,13 @@ Use `orchestrate-implementation-<agent>` to implement an existing approved plan 
 For each agent, the plan gate runs before dispatch or project changes. If no readable approved
 plan is available, it stops that workflow and recommends `delegate-work-<agent>`.
 An unrelated `plans/` folder does not select plan implementation.
+
+Use `delegate-work-swarm` to split a direct task across Codex, agy, and pi at the same time,
+or `orchestrate-implementation-swarm` to do the same for an approved plan, phase by phase.
+Each assignment goes to an agent by task level and your ranking (Codex > agy >= pi, with
+pi's place set by the model it runs). Parallel workers own disjoint files in one Git tree,
+and `swarm-files.sh` checks who changed what. See
+[swarm rules](skills/delegate-work-swarm/references/swarm-rules.md).
 
 The direct task skills also explicitly support discussion with a worker. The orchestrator
 can ask for a second opinion, challenge assumptions, and resume the same thread or session

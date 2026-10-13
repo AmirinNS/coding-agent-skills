@@ -11,6 +11,8 @@ difference is the source and shape of the assignment.
 | Fix, refactor, investigate, or edit requested documents | `delegate-work-<agent>` | A bounded task from the user |
 | Discuss an approach or get a second opinion | `delegate-work-<agent>` | A question and desired insight |
 | Implement an approved plan by phase | `orchestrate-implementation-<agent>` | An existing approved plan |
+| Split a task across Codex, agy, and pi in parallel | `delegate-work-swarm` | A task with separately reviewable pieces |
+| Implement an approved plan with parallel workers | `orchestrate-implementation-swarm` | An existing approved plan |
 
 A request to "delegate implementation based on the approved plan" belongs to plan
 implementation. A request to "discuss this plan" belongs to discussion. The presence of
@@ -59,6 +61,18 @@ All plan skills resolve their plan prerequisite first. If an explicitly named pl
 or unreadable, they report that path defect without substitution. If no plan is available,
 they stop and recommend their corresponding direct task skill. All direct task skills support
 both direct assignments and discussion-only consulting.
+
+## Swarm
+
+The swarm skills run several workers at once on Codex, agy, and pi. Each assignment gets a
+level (low, mid, top) from how long it is and whether a test, type check, or lint rule
+can judge it. The level and the user's ranking (Codex > agy >= pi, pi's place set by the
+model it runs) pick the agent. Workers own disjoint files in one Git tree, and
+`swarm-files.sh` snapshots each wave, credits every change to its owner, and restores a
+failed worker's files before escalation. Failures are classified as unavailable,
+environment, slip, or reasoning before any retry, and an unavailable agent never counts
+toward escalation. The full rules, including the user-maintained pi model ranks table,
+live in [swarm rules](../skills/delegate-work-swarm/references/swarm-rules.md).
 
 ## Discussion and follow-up
 
