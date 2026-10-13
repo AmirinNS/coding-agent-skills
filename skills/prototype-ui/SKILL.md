@@ -24,6 +24,7 @@ A prototype can come before or after the plan. Before: to decide what to build. 
 - `../frontend-design/references/design-rules.md`
 - `../frontend-design/references/domain-audience-playbook.md`
 - `../frontend-design/references/design-md-template.md`
+- `../frontend-design/references/image-assets.md` (read when the design needs generated images)
 
 If they aren't installed, apply the same principles: concrete tokens, 4/8pt spacing, WCAG AA contrast, one focal point per screen, the domain's core needs, no AI-slop defaults.
 

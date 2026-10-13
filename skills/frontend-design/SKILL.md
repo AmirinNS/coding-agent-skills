@@ -27,6 +27,7 @@ Planning → Review Plan (5x) → [prototype-ui, only for big/new UI] → **Fron
 - `references/design-rules.md`: typography, color, spacing, components, motion, intensity, AI-slop defaults to avoid
 - `references/domain-audience-playbook.md`: what banking, trading, CRM, healthcare… and different audiences need
 - `references/design-md-template.md`: the DESIGN.md format
+- `references/image-assets.md`: how to delegate generated images to Codex or agy (read when the design needs them)
 
 ## Step 1: Context
 

@@ -139,10 +139,6 @@ For a button on an existing screen, steps 1 to 3 collapse into the plan marking
 
 ## Notes
 
-- The README structure tree and the `design-md-template.md` and `frontend-design` skill
-  both name a `design-critique` skill. That skill is not in this change set and no
-  `skills/design-critique/` folder exists yet, so the README currently points at a skill
-  the repo does not ship. Either add the skill or trim the README line before releasing.
 - `CLAUDE-template.md` still lists Phase 3 as `frontend-design` /
   `frontend-bootstrap-evolution` / `python-development`. It was left untouched because it is
   a scaffold template rather than part of this change set, but it now lags the README.

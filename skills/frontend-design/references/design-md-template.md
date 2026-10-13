@@ -1,6 +1,6 @@
 # DESIGN.md Template
 
-The project's binding design system. Written by `design-critique`, `prototype-ui`, or `frontend-design` (whichever runs first) and read by all of them. Keep it at the repo root (or `docs/`).
+The project's binding design system. Written by `design-study`, `design-critique`, `prototype-ui`, or `frontend-design` (whichever runs first) and read by all of them. Keep it at the repo root (or `docs/`).
 
 ```markdown
 # Design System — <Product>
@@ -14,6 +14,9 @@ The project's binding design system. Written by `design-critique`, `prototype-ui
 
 ## Vibe
 One paragraph in the user's own words. References: <apps/sites> — traits taken: <list>.
+
+## Source
+Only when studied from an existing product (`design-study`): source URL, codebase path or screenshots; own or third-party; per-token origin (measured / theme file / estimated).
 
 ## Tokens
 - Fonts: display <font>, body <font>

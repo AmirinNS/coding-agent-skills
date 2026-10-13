@@ -22,6 +22,10 @@ Leave changes uncommitted. Do not stage, commit, publish, or run document-and-co
 Documentation edits are allowed when requested, but do not add a documentation phase to
 unrelated work. An investigation can finish with findings and no product edits.
 
+Image generation is a valid assignment. Before dispatch, check that `codex features list`
+shows `image_generation` enabled. The brief must give the exact output path for each image,
+and review means opening each file and checking it against the brief.
+
 For discussion or advice, define the question and desired insight as the assignment. Default
 to no product edits and use temporary handoff files. The worker may offer alternatives,
 challenge assumptions, and identify uncertainty. The orchestrator evaluates the evidence

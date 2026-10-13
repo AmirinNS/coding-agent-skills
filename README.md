@@ -70,6 +70,10 @@ coding-agent-skills/
 │   ├── document-and-commit/SKILL.md  # Document + stage + commit in one step (combines the two above)
 │   ├── fix-bug/SKILL.md             # Diagnose and fix bugs (reproduce-first)
 │   ├── design-critique/SKILL.md      # Critique a UI for its domain & audience, explore styles, redesign → DESIGN.md
+│   ├── design-study/                 # Measure an existing site, app or screenshots → token sheet → DESIGN.md
+│   │   ├── SKILL.md
+│   │   ├── scripts/                   #   study_site.py: screenshots + computed-style tally (Playwright)
+│   │   └── tests/                     #   runnable check against a local fixture page
 │   ├── prototype-ui/SKILL.md         # Wireframes + clickable prototype with design rationale → approval (big/new UI only)
 │   ├── frontend-design/              # Build UI: directly for simple additions, to the approved prototype otherwise
 │   │   ├── SKILL.md
@@ -103,6 +107,7 @@ flowchart TD
         Impl -->|Backend| Code[CLAUDE.md + approved plan]
         Impl -->|Frontend| FD[frontend-design]
         DC[design-critique] -.->|DESIGN.md| FD
+        DS[design-study] -.->|DESIGN.md| FD
         PU[prototype-ui] -.->|big/new UI: approved prototype| FD
         Impl -->|Bootstrap| FBE[frontend-bootstrap-evolution]
     end
@@ -160,7 +165,7 @@ flowchart TD
 |------------|-------|-------------|
 | **1. Planning** | `plan-feature` | Creates a focused implementation plan in `plans/` |
 | **2. Analysis** | `plan-review` | Reviews the plan for flaws, over-engineering, feasibility. Run multiple times — each pass logs changes to the plan file |
-| **3. Design** | `design-critique` / `prototype-ui` / `frontend-design` / `frontend-bootstrap-evolution` / `python-development` | `frontend-design` builds UI: simple additions directly, big or new UI after an optional `prototype-ui` pass (wireframes and a clickable prototype with a design-decisions table, approved by you). `design-critique` critiques an existing UI for its domain and audience, explores styles with you, and writes `DESIGN.md`, which the other two follow. `python-development` for Python. A phase can need both. Other backend work follows CLAUDE.md guidelines directly |
+| **3. Design** | `design-study` / `design-critique` / `prototype-ui` / `frontend-design` / `frontend-bootstrap-evolution` / `python-development` | `frontend-design` builds UI: simple additions directly, big or new UI after an optional `prototype-ui` pass (wireframes and a clickable prototype with a design-decisions table, approved by you). `design-critique` critiques an existing UI for its domain and audience, explores styles with you, and writes `DESIGN.md`, which the other two follow. `design-study` measures an existing site, app or screenshots and writes `DESIGN.md` from it. `python-development` for Python. A phase can need both. Other backend work follows CLAUDE.md guidelines directly |
 | **4. Implementation** | `orchestrate-implementation-claude` (or `orchestrate-implementation-agy` for agy, `orchestrate-implementation-codex` for Codex, `orchestrate-implementation-pi` for pi) → `implementation-review` → `document-and-commit` | Delegate phased implementation to an implementor, then review. The `-claude` variant spawns a fresh sonnet `phase-implementor` subagent per phase, needs no external CLI, and stops at review: it never commits, so the whole run is left uncommitted and you call `document-and-commit` yourself at the end. The `-agy` variant runs the same loop with the Antigravity CLI (agy): one fresh conversation per phase, back-and-forth exchanges through `agy-exec.sh resume`, and stops at review leaving work uncommitted. The `-codex` variant runs the same loop with the Codex CLI: one `codex exec` thread per phase, questions and replies go back and forth through `codex exec resume`, and the `workspace-write` sandbox keeps `.git` read-only so nothing is committed. The pi variant runs the same loop with the pi CLI: one fresh session per phase, back-and-forth exchanges through `pi-rpc.sh resume`, and stops at review leaving work uncommitted. For an Expo app, the review runs the app on an emulator with `run-expo-android`. `document-and-commit` combines `create-docs` and `generate-commit` |
 | **5. Maintenance** | `fix-bug` | Reproduce-first bug fixing. Skips phases 1-3 |
 

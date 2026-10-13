@@ -22,6 +22,11 @@ Leave changes uncommitted. Do not stage, commit, publish, or run document-and-co
 Documentation edits are allowed when requested, but do not add a documentation phase to
 unrelated work. An investigation can finish with findings and no product edits.
 
+Image generation is a valid assignment. agy saves generated images to its conversation
+artifacts, outside the project, so the brief must tell it to copy each final file to the
+exact output path and report that path. Review means opening each file and checking it
+against the brief.
+
 For discussion or advice, define the question and desired insight as the assignment. Default
 to no product edits and use temporary handoff files. The worker may offer alternatives,
 challenge assumptions, explain reasoning, and identify uncertainty. The orchestrator evaluates
