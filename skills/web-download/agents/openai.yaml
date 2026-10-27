@@ -1,0 +1,4 @@
+interface:
+  display_name: "Web Download"
+  short_description: "Download files with curl and verify what arrived"
+  default_prompt: "Use $web-download to save this file locally."

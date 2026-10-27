@@ -1,0 +1,4 @@
+interface:
+  display_name: "Web Browse"
+  short_description: "Search Brave/Bing in real Chrome via Playwright"
+  default_prompt: "Use $web-browse to find current sources on this topic."

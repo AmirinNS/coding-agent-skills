@@ -48,3 +48,9 @@
 
 - Classifying slip versus reasoning failure is still orchestrator judgment; no natural reasoning failure occurred in these runs.
 - Git submodules are not handled by `swarm-files.sh`.
+
+## 2026-10-21 — Review the whole screen before implementing a substantial UI redesign
+
+During the Nakhoda project-session redesign, repeated local changes to stats, search, and filters left the screen cluttered and the purpose of its controls unclear. A generated image prototype brought the whole screen into one review, made hierarchy and spacing easy to judge, and combined the user's accumulated preferences into a coherent layout that they approved before implementation.
+
+The useful change was the design process. Image generation made visual review easier, but the prototype still needed real product context, existing design constraints, and clear behavior for each control. For substantial UI changes, use an image prototype, gather feedback, record the approved layout and behavior, then implement and compare the running screen against it; use a clickable prototype when the unresolved question is interaction, and build small fixes directly.

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Web Search"
+  short_description: "Search the web through the droid CLI's WebSearch tool"
+  default_prompt: "Use $web-search to find current primary sources on this topic."

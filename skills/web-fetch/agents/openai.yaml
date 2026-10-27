@@ -1,0 +1,4 @@
+interface:
+  display_name: "Web Fetch"
+  short_description: "Fetch a public page as Markdown via the droid CLI"
+  default_prompt: "Use $web-fetch to read the content of this page."

@@ -76,6 +76,22 @@ coding-agent-skills/
 │   ├── generate-commit/SKILL.md      # Generate conventional commit messages
 │   ├── document-and-commit/SKILL.md  # Document + stage + commit in one step (combines the two above)
 │   ├── fix-bug/SKILL.md             # Diagnose and fix bugs (reproduce-first)
+│   ├── web-search/                  # Search the web through the droid CLI's WebSearch tool
+│   │   ├── SKILL.md
+│   │   ├── scripts/web_search.py    #   one droid exec per query, JSON envelope out
+│   │   └── tests/                   #   runnable check for the script
+│   ├── web-fetch/                   # Read a public page as Markdown via the droid CLI's FetchUrl tool
+│   │   ├── SKILL.md
+│   │   ├── scripts/web_fetch.py     #   URL safety checks first, one droid exec per URL
+│   │   └── tests/                   #   runnable check for the script
+│   ├── web-browse/                  # Search Brave/Bing in real Chrome via Playwright (no SearXNG)
+│   │   ├── SKILL.md
+│   │   ├── scripts/web_browse.py    #   human-style typing, stealth launch, JSON envelope out
+│   │   └── tests/                   #   runnable check for the pure logic
+│   ├── web-download/                # Save files from public URLs with curl, verified before keeping
+│   │   ├── SKILL.md
+│   │   ├── scripts/web_download.py  #   magic-byte check, HTML error-page rejection, resume
+│   │   └── tests/                   #   runnable check for the logic
 │   ├── design-critique/SKILL.md      # Critique a UI for its domain & audience, explore styles, redesign → DESIGN.md
 │   ├── design-study/                 # Measure an existing site, app or screenshots → token sheet → DESIGN.md
 │   │   ├── SKILL.md
@@ -175,6 +191,58 @@ flowchart TD
 | **3. Design** | `design-study` / `design-critique` / `prototype-ui` / `frontend-design` / `frontend-bootstrap-evolution` / `python-development` | `frontend-design` builds UI: simple additions directly, big or new UI after an optional `prototype-ui` pass (wireframes and a clickable prototype with a design-decisions table, approved by you). `design-critique` critiques an existing UI for its domain and audience, explores styles with you, and writes `DESIGN.md`, which the other two follow. `design-study` measures an existing site, app or screenshots and writes `DESIGN.md` from it. `python-development` for Python. A phase can need both. Other backend work follows CLAUDE.md guidelines directly |
 | **4. Implementation** | `orchestrate-implementation-claude` (or `orchestrate-implementation-agy` for agy, `orchestrate-implementation-codex` for Codex, `orchestrate-implementation-pi` for pi) → `implementation-review` → `document-and-commit` | Delegate phased implementation to an implementor, then review. The `-claude` variant spawns a fresh sonnet `phase-implementor` subagent per phase, needs no external CLI, and stops at review: it never commits, so the whole run is left uncommitted and you call `document-and-commit` yourself at the end. The `-agy` variant runs the same loop with the Antigravity CLI (agy): one fresh conversation per phase, back-and-forth exchanges through `agy-exec.sh resume`, and stops at review leaving work uncommitted. The `-codex` variant runs the same loop with the Codex CLI: one `codex exec` thread per phase, questions and replies go back and forth through `codex exec resume`, and the `workspace-write` sandbox keeps `.git` read-only so nothing is committed. The pi variant runs the same loop with the pi CLI: one fresh session per phase, back-and-forth exchanges through `pi-rpc.sh resume`, and stops at review leaving work uncommitted. For an Expo app, the review runs the app on an emulator with `run-expo-android`. `document-and-commit` combines `create-docs` and `generate-commit` |
 | **5. Maintenance** | `fix-bug` | Reproduce-first bug fixing. Skips phases 1-3 |
+
+## Web search
+
+Use `web-search` to find current sources through the droid CLI's built-in
+`WebSearch` tool. It reuses the droid login instead of a search API key, so it
+needs no SearXNG instance, no recon-tools checkout, and no container runtime.
+The only dependency is the `droid` binary on PATH, which makes the skill
+portable to any agent that can run a shell, including pi and opencode. Each
+query spawns one `droid exec` process (several seconds each). `scripts/web_search.py`
+handles multiple queries, dedupe, optional page-text fetch through `FetchUrl`,
+and live structured facts through WebSearch's knowledge mode. The skill covers
+the JSON envelope, source citations, and failed or partial searches.
+
+## Web fetch
+
+Use `web-fetch` to read a public page as Markdown through the droid CLI's
+built-in `FetchUrl` tool. Like `web-search`, it reuses the droid login instead
+of an API key, needs no headless browser, and works on any agent that can run a
+shell. `scripts/web_fetch.py` refuses unsafe URLs before spawning anything: no
+localhost, no private networks, no credentials, no secret-looking query
+parameters. Each URL costs one `droid exec` process (several seconds each).
+Binary files do not survive the Markdown round-trip, so download PDFs, images,
+and archives with `curl -L -o FILE URL` instead.
+
+## Web browse
+
+Use `web-browse` to search Brave and Bing by driving the real installed Chrome
+with Playwright: it opens the engine homepage, types the query like a person,
+and reads the results page, so the bot blocks that stop plain HTTP scrapers
+don't fire. No SearXNG, no Docker, no database. Needs Playwright for the
+interpreter (this machine has `/Users/amirinns/PythonEnv/isaham/bin/python`)
+and real Google Chrome. Each query takes 10-50 seconds with human-style dwell.
+`scripts/web_browse.py` prints a JSON envelope on stdout (logs on stderr),
+dedupes by URL across queries and engines, optionally extracts each page's
+readable text with `--fetch`, and unwraps Bing's redirect links. Brave can
+gate a session after a few runs with a "verifying you're not a bot" check;
+the run reports it plainly, and the fix is `--engine bing`, a headed retry,
+or a warmed `--profile`.
+
+## Web download
+
+Use `web-download` to save files from public URLs with curl. It is the binary
+counterpart to `web-fetch`, which reads pages as Markdown and rejects binaries.
+`scripts/web_download.py` refuses unsafe URLs before spawning curl (no
+credentials, no secret-looking query parameters, no private hosts), takes the
+filename from `Content-Disposition` or the URL path, streams to a `.part` file
+so an interrupted transfer resumes, and verifies the result before keeping it:
+non-empty, not an HTML error page or login wall, and magic bytes matching the
+extension for formats that have them. It never overwrites an existing file
+without `--force`, and HTTP errors fail loudly through curl's `--fail`. Only
+curl is required. No authentication: gated content goes through the browser
+with a warmed profile instead.
 
 ## Delegating work and discussion
 
