@@ -46,6 +46,15 @@ Compare alternatives and challenge assumptions. Do not implement changes.
 
 Use $orchestrate-implementation-agy to implement the approved plan at
 plans/search-pagination.md. Do not commit.
+
+Use $delegate-work-droid to investigate why search pagination skips results.
+Preserve the existing API. Do not commit.
+
+Use $delegate-work-droid to discuss whether this design handles retries correctly.
+Compare alternatives and challenge assumptions. Do not implement changes.
+
+Use $orchestrate-implementation-droid to implement the approved plan at
+plans/search-pagination.md. Do not commit.
 ```
 
 ## Current agent differences
@@ -56,6 +65,7 @@ plans/search-pagination.md. Do not commit.
 | Antigravity | [delegate-work-agy](../skills/delegate-work-agy/SKILL.md), explicit discussion support, run identity capture | [orchestrate-implementation-agy](../skills/orchestrate-implementation-agy/SKILL.md), fresh conversation per phase, run identity capture, missing-plan fallback, leaves changes uncommitted |
 | pi | [delegate-work-pi](../skills/delegate-work-pi/SKILL.md), one session per assignment, explicit discussion support, manual compaction | [orchestrate-implementation-pi](../skills/orchestrate-implementation-pi/SKILL.md), fresh session per phase, missing-plan fallback, leaves changes uncommitted |
 | Claude Code | [delegate-work-claude](../skills/delegate-work-claude/SKILL.md), native subagent per assignment, explicit discussion support | [orchestrate-implementation-claude](../skills/orchestrate-implementation-claude/SKILL.md), fresh native implementor per phase, missing-plan fallback, leaves changes uncommitted |
+| Droid | [delegate-work-droid](../skills/delegate-work-droid/SKILL.md), explicit discussion support, run identity capture, per-turn autonomy levels | [orchestrate-implementation-droid](../skills/orchestrate-implementation-droid/SKILL.md), fresh `droid exec` session per phase, run identity capture, missing-plan fallback, leaves changes uncommitted |
 
 All plan skills resolve their plan prerequisite first. If an explicitly named plan is missing
 or unreadable, they report that path defect without substitution. If no plan is available,
@@ -117,10 +127,15 @@ a warning is emitted. Only use verified compaction capabilities:
 - Codex CLI helpers have no manual compaction command; manual compaction is an app-server feature.
 - Antigravity manages context automatically at the engine level without a manual compaction CLI command.
 - Claude subagents cannot be manually compacted; a fresh spawn per phase or assignment resets context.
+- Droid compacts sessions automatically near a configured threshold. The `droid exec` helpers
+  have no manual compaction command; a fresh session per phase or assignment resets context.
 
 Report counters only from actual runtime telemetry with their verified scope. Do not estimate
 counts, sum cumulative counters as increments, or double-count cached input. Total tokens
 spent differ from tokens occupying the current context. If usage is unavailable, say so.
+Droid usage is per turn: one turn combines its model calls, and a later turn counts earlier
+conversation again when it replays it as input, so preserve per-turn `usage.json` snapshots
+instead of summing counters across resumes.
 
 Preserve relevant counters and diagnostics before another turn overwrites them or `stop`
 removes helper state. After supported manual compaction, reload handoff records before
@@ -187,6 +202,31 @@ hardcoded path. Reproduce failures against the recorded version and command path
 alone does not establish incompatibility or authorize changing the installed CLI. Update the
 baseline deliberately after checking the new release.
 
+### Droid version identity
+
+The help-checked baseline is `droid 0.251.0`, checked on 2026-10-29 at
+`/Users/amirinns/.local/bin/droid`. It is a documentation and invocation reference, not an
+enforced installation pin or a live-service compatibility guarantee. Helper tests run
+against a mock CLI.
+
+Both Droid helpers save `cli-version.txt` and `cli-path.txt` before each executed new or
+resumed turn. The direct task helper stores these under `${TMPDIR:-/tmp}/droid-work-<slug>/`;
+the plan helper uses `${TMPDIR:-/tmp}/droid-orch-<slug>/`. Copy the values into the work or
+implementation log after every turn, before another turn overwrites them or `stop` removes
+them. A failed version capture prevents worker dispatch.
+
+The baseline was checked against installed `droid --help`, `droid exec --help`, and
+`droid resume --help`, mocked helper checks, and live turns through the shipped helper that
+verified terminal `completion` events (`finalText`), `droid exec -s` resume, session
+capture, and per-turn usage counters. The first live probe ended in a billing error on the
+default model (`429 you have no left credit for step plan`); the verification turns ran on
+`custom:Xiaomi-MiMo-V2.6-Flash`. See the
+[Droid maintenance record](../skills/delegate-work-droid/references/droid-cli-reference.md#maintenance-record-2026-10-29).
+If the actual version differs from the baseline or the previous turn, inspect
+`droid exec --help` and `droid resume --help`. Reproduce failures against the recorded
+version and command path. A mismatch alone does not establish incompatibility or authorize
+changing the installed CLI. Update the baseline deliberately after checking the new release.
+
 ### Repair scope
 
 Identify whether a failure comes from task code, the prompt or handoff, the helper, or the
@@ -196,6 +236,7 @@ verify the repair, and resume the existing worker session when recoverable.
 Use [Codex troubleshooting](../skills/delegate-work-codex/references/troubleshooting-and-bugfixes.md),
 [Antigravity troubleshooting](../skills/delegate-work-agy/references/troubleshooting-and-bugfixes.md),
 [pi troubleshooting](../skills/delegate-work-pi/references/troubleshooting-and-bugfixes.md),
+[Droid troubleshooting](../skills/delegate-work-droid/references/troubleshooting-and-bugfixes.md),
 and the corresponding CLI references for diagnostic files, supported commands, and official
 documentation. Global configuration, credentials, installed binaries, and permission boundaries
 are outside routine local fixes.

@@ -1,6 +1,6 @@
 # Coding Agent Skills
 
-A collection of coding agent skills and guidelines for feature development, direct tasks, and investigation. Includes delegation workflows for Codex, Claude Code, Antigravity, and pi.
+A collection of coding agent skills and guidelines for feature development, direct tasks, and investigation. Includes delegation workflows for Codex, Claude Code, Antigravity, pi, and Droid.
 
 ## Structure
 
@@ -45,6 +45,10 @@ coding-agent-skills/
 │   │   ├── agy-exec.sh                #   helper to start, resume, and stop one conversation per phase
 │   │   ├── check.sh                   #   runnable check
 │   │   └── references/                #   agy CLI reference, subagents, and troubleshooting
+│   ├── orchestrate-implementation-droid/ # Same loop, implementor is a Droid worker (droid exec)
+│   │   ├── SKILL.md                   #   fresh Droid session per phase, back-and-forth via resume,
+│   │   │                              #   stops at review (no docs, no commits)
+│   │   └── droid-exec.sh              #   helper to start, resume, and stop one session per phase
 │   ├── delegate-work-codex/          # Delegate tasks or discussion from a request, no plans/ dependency
 │   │   ├── SKILL.md                   #   task brief, same-thread discussion, independent review, no commits
 │   │   └── codex-exec.sh              #   standalone helper, one thread per bounded assignment
@@ -62,6 +66,11 @@ coding-agent-skills/
 │   ├── delegate-work-claude/         # Delegate direct tasks or discussion to Claude subagents
 │   │   ├── SKILL.md                   #   one subagent per assignment, same-thread discussion, no commits
 │   │   └── agents/                    #   task-worker subagent definition
+│   ├── delegate-work-droid/          # Delegate direct tasks or discussion to a Droid worker (droid exec)
+│   │   ├── SKILL.md                   #   task brief, same-session replies, independent review, no commits
+│   │   ├── droid-exec.sh              #   standalone helper, one session per bounded assignment
+│   │   ├── references/                #   droid CLI reference and worker troubleshooting
+│   │   └── tests/                     #   mocked helper checks, runnable without the droid CLI
 │   ├── delegate-work-swarm/          # Split a direct task across Codex, agy, and pi, run in parallel
 │   │   ├── SKILL.md                   #   routes by task level and agent ranking, waves, independent review, no commits
 │   │   ├── swarm-files.sh             #   snapshot, attribute, overlap, and restore file ownership in a shared Git tree
@@ -189,7 +198,7 @@ flowchart TD
 | **1. Planning** | `plan-feature` | Creates a focused implementation plan in `plans/` |
 | **2. Analysis** | `plan-review` | Reviews the plan for flaws, over-engineering, feasibility. Run multiple times — each pass logs changes to the plan file |
 | **3. Design** | `design-study` / `design-critique` / `prototype-ui` / `frontend-design` / `frontend-bootstrap-evolution` / `python-development` | `frontend-design` builds UI: simple additions directly, big or new UI after an optional `prototype-ui` pass (wireframes and a clickable prototype with a design-decisions table, approved by you). `design-critique` critiques an existing UI for its domain and audience, explores styles with you, and writes `DESIGN.md`, which the other two follow. `design-study` measures an existing site, app or screenshots and writes `DESIGN.md` from it. `python-development` for Python. A phase can need both. Other backend work follows CLAUDE.md guidelines directly |
-| **4. Implementation** | `orchestrate-implementation-claude` (or `orchestrate-implementation-agy` for agy, `orchestrate-implementation-codex` for Codex, `orchestrate-implementation-pi` for pi) → `implementation-review` → `document-and-commit` | Delegate phased implementation to an implementor, then review. The `-claude` variant spawns a fresh sonnet `phase-implementor` subagent per phase, needs no external CLI, and stops at review: it never commits, so the whole run is left uncommitted and you call `document-and-commit` yourself at the end. The `-agy` variant runs the same loop with the Antigravity CLI (agy): one fresh conversation per phase, back-and-forth exchanges through `agy-exec.sh resume`, and stops at review leaving work uncommitted. The `-codex` variant runs the same loop with the Codex CLI: one `codex exec` thread per phase, questions and replies go back and forth through `codex exec resume`, and the `workspace-write` sandbox keeps `.git` read-only so nothing is committed. The pi variant runs the same loop with the pi CLI: one fresh session per phase, back-and-forth exchanges through `pi-rpc.sh resume`, and stops at review leaving work uncommitted. For an Expo app, the review runs the app on an emulator with `run-expo-android`. `document-and-commit` combines `create-docs` and `generate-commit` |
+| **4. Implementation** | `orchestrate-implementation-claude` (or `orchestrate-implementation-agy` for agy, `orchestrate-implementation-codex` for Codex, `orchestrate-implementation-pi` for pi, `orchestrate-implementation-droid` for droid) → `implementation-review` → `document-and-commit` | Delegate phased implementation to an implementor, then review. The `-claude` variant spawns a fresh sonnet `phase-implementor` subagent per phase, needs no external CLI, and stops at review: it never commits, so the whole run is left uncommitted and you call `document-and-commit` yourself at the end. The `-agy` variant runs the same loop with the Antigravity CLI (agy): one fresh conversation per phase, back-and-forth exchanges through `agy-exec.sh resume`, and stops at review leaving work uncommitted. The `-codex` variant runs the same loop with the Codex CLI: one `codex exec` thread per phase, questions and replies go back and forth through `codex exec resume`, and the `workspace-write` sandbox keeps `.git` read-only so nothing is committed. The pi variant runs the same loop with the pi CLI: one fresh session per phase, back-and-forth exchanges through `pi-rpc.sh resume`, and stops at review leaving work uncommitted. The `-droid` variant runs the same loop with a Droid worker through `droid exec`: one fresh session per phase at autonomy `medium`, back-and-forth exchanges through `droid-exec.sh resume`, drift checks against the Git baseline, and stops at review leaving work uncommitted. For an Expo app, the review runs the app on an emulator with `run-expo-android`. `document-and-commit` combines `create-docs` and `generate-commit` |
 | **5. Maintenance** | `fix-bug` | Reproduce-first bug fixing. Skips phases 1-3 |
 
 ## Web search
@@ -246,10 +255,10 @@ with a warmed profile instead.
 
 ## Delegating work and discussion
 
-Use `delegate-work-codex`, `delegate-work-agy`, `delegate-work-pi`, or `delegate-work-claude`
-for a direct task without a `plans/` folder or plan file. These skills support fixes,
-refactors, investigations, and requested document edits. The main session owns scope, questions,
-review, and verification. Changes remain uncommitted.
+Use `delegate-work-codex`, `delegate-work-agy`, `delegate-work-pi`, `delegate-work-droid`, or
+`delegate-work-claude` for a direct task without a `plans/` folder or plan file. These skills
+support fixes, refactors, investigations, and requested document edits. The main session owns
+scope, questions, review, and verification. Changes remain uncommitted.
 
 Use `orchestrate-implementation-<agent>` to implement an existing approved plan by phase.
 For each agent, the plan gate runs before dispatch or project changes. If no readable approved
@@ -285,6 +294,12 @@ plans/search-pagination.md. Do not commit.
 
 Use $orchestrate-implementation-codex to implement the approved plan at
 plans/search-pagination.md. Do not commit.
+
+Use $delegate-work-droid to fix the search pagination bug. Preserve the existing API
+and verify the affected flow. Do not commit.
+
+Use $orchestrate-implementation-droid to implement the approved plan at
+plans/search-pagination.md. Do not commit.
 ```
 
 Exact invocation syntax depends on the host and requires the skill to be available there.
@@ -302,6 +317,13 @@ pi is the one agent here with a verified manual compaction mechanism: the helper
 `{"type":"compact"}` over the RPC session, with optional custom instructions, and the worker
 reloads the handoff records afterwards. Automatic compaction still fires near the context
 limit before any warning, so a prompt instruction gives no veto over it.
+
+The Droid helpers drive one-shot `droid exec` turns and expose no manual compaction command;
+Droid compacts sessions automatically near a configured threshold. Each turn reports its own
+usage (input, output, cache, and Factory Service Credits) in `usage.json`, and later turns
+count earlier conversation again when they replay it as input, so preserve per-turn snapshots
+instead of summing counters across resumes. Context occupancy is not exposed through
+`droid exec`.
 
 The Codex CLI help baseline is `codex-cli 0.162.1`, checked on 2026-10-11. Both helpers
 record the actual CLI version and command path for each turn so failures can be traced
@@ -323,6 +345,14 @@ temporary helper state, and a failed version capture stops the turn instead of d
 the worker. Copy them into the work log or implementation log before another turn overwrites
 them or `stop` removes them. Version differences prompt a help check against installed
 `pi --help` without automatic upgrades or downgrades.
+
+The Droid CLI help baseline is `droid 0.251.0`, checked on 2026-10-29 at
+`/Users/amirinns/.local/bin/droid`. Both helpers record the actual CLI version and command
+path for each executed turn, and a failed version capture stops the turn instead of
+dispatching the worker. Version differences prompt a help check against installed
+`droid exec --help` and `droid resume --help` without automatic upgrades or downgrades. See
+the [Droid maintenance record](skills/delegate-work-droid/references/droid-cli-reference.md#maintenance-record-2026-10-29)
+for what was verified by help, mocked, and live checks.
 
 See the [delegation guide](docs/delegation.md) for current agent differences, handoffs,
 compaction, token reporting, and troubleshooting. Use the
