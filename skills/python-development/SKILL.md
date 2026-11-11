@@ -28,8 +28,9 @@ These are house style. They are not open for per-file reinterpretation.
 - **Thin routes.** A handler parses the request, calls one `modules/` function, and
   renders or returns. Logic in a route handler is a bug.
 - **4-space indent** in new files. When editing an existing file, match that file.
-- **The project's venv**, never system `python`/`pip`. Read the project's `AGENTS.md` /
-  `CLAUDE.md` for the path; do not guess it.
+- **The project's environment via `uv`**, never system `python`/`pip` or bare virtualenvs.
+  Run every command through `uv` (`uv run python ...`, `uv run pytest`), and add
+  dependencies with `uv add <pkg>` (`uv add --dev <pkg>` for dev dependencies).
 
 ## When a class IS justified
 
@@ -47,8 +48,8 @@ state belongs in the caller or the database.
 
 ## Step 1: Read before writing
 
-1. Read the project's `CLAUDE.md` / `AGENTS.md`. Venv path, stack, and any project-specific
-   rules override this skill.
+1. Read the project's `CLAUDE.md` / `AGENTS.md`. Environment setup, stack, and any
+   project-specific rules override this skill.
 2. Read the files you are about to edit. Match their existing patterns, naming, and indent.
 3. Look for an existing helper before writing a new one. A near-duplicate utility is worse
    than the import.
@@ -108,7 +109,7 @@ Non-trivial logic leaves a runnable check behind. A branch, loop, parser, or mon
 security calculation is non-trivial. A one-line rename is not.
 
 - Run the project's real test command, discovered from `pyproject.toml` / `Makefile` /
-  `AGENTS.md`. Do not guess the command.
+  `AGENTS.md` (e.g. `uv run pytest`). Do not guess the command.
 - Test the edge: empty input, one item, the boundary value, the malformed payload. A test
   that only covers the happy path proves the happy path.
 - **Fail first.** For a bug fix, run the reproduction and watch it fail before you fix it.

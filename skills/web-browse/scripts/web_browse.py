@@ -10,7 +10,7 @@ Ported from the recon-tools bundle (web_recon.py + browser.py) with the
 SearXNG API engine, the Docker service, and the recon.db ingest removed.
 
 Usage:
-    python3 web_browse.py "QUERY" [more queries] [--engine brave|bing|all]
+    uv run --with playwright python web_browse.py "QUERY" [more queries] [--engine brave|bing|all]
         [--max N] [--fetch] [--headless] [--profile DIR] [--no-stealth]
 
 Prints a JSON envelope: keywords, engines, count, posts, errors. Each post has

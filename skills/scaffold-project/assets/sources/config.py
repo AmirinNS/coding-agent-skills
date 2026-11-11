@@ -1,7 +1,7 @@
 import os
 
-from dotenv import load_dotenv
 import pymongo
+from dotenv import load_dotenv
 
 load_dotenv()
 
@@ -18,7 +18,7 @@ DEBUG = not IS_PRODUCTION
 MONGO_URI = os.environ.get("MONGO_URI", "mongodb://localhost:27017")
 DB_NAME = os.environ.get("DB_NAME", "__DB_NAME__")
 SECRET_KEY = os.environ.get("SECRET_KEY", "dev-secret-change-me")
-PORT = int(os.environ.get("PORT", 5000))
+PORT = int(os.environ.get("PORT", "5000"))
 
 # Site identity — used for SEO meta tags, canonical URLs, robots/sitemap.
 SITE_NAME = os.environ.get("SITE_NAME", "__PROJECT_NAME__")

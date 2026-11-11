@@ -20,7 +20,7 @@ The starter files are **physical assets** in this skill's `assets/` directory an
 - **Themed error pages** ship in the scaffold: one `templates/error.html` (extends `base.html`, `noindex`) serves every HTTP status via `sources/errors.py` (`init_errors(app)` registers a handler for all codes; API/`/api` + JSON-Accept callers get JSON; render-failure fallback; `Retry-After` on 429). (In dev/testing, Flask's debugger still intercepts 500s; the themed page shows in production.)
 - **Baseline SEO** ships in the scaffold: `base.html` carries meta description + Open Graph + Twitter + canonical (per-page overridable via `{% block title %}` / `{% block meta_description %}`), `sources/seo.py` holds defaults + `canonical_url()`, and the entrypoint serves `/robots.txt` + a minimal `/sitemap.xml`. Rich JSON-LD and dynamic DB-driven sitemaps are the `add-capability` skill's job (seo), not the scaffold's.
 - **Three run modes via `APP_ENV`.** `development` and `testing` use the native Flask server with debug on; `production` uses the waitress WSGI server with debug off. One mode-aware entrypoint; the native Flask server is never used in production. The app and MongoDB are assumed co-located (same host); `MONGO_URI` is set per environment in `.env` (testing may point at a remote/shared DB), never hardcoded.
-- **Dedicated venv** at `/Users/amirinns/PythonEnv/<module_name>/` — never system `python`/`pip`.
+- **Environment managed via `uv`** (`pyproject.toml` + `uv.lock` + `.python-version` 3.12) — never system `python`/`pip` or bare venvs.
 - **`plans/` folder** from day one; plan files are kebab-case markdown.
 - Stack changes (different framework/DB) require explicit user approval — don't substitute.
 
@@ -31,7 +31,7 @@ Ask only for what you can't confidently infer:
 | Input | Default / how to derive |
 |-------|-------------------------|
 | **Project name** (display, e.g. `Deal Tracker`) | Ask if not given |
-| **`module_name`** (Python-safe) | lowercase, `-`/spaces → `_`, e.g. `deal_tracker`. Used for entrypoint filename, venv name, default db name. |
+| **`module_name`** (Python-safe) | lowercase, `-`/spaces → `_`, e.g. `deal_tracker`. Used for entrypoint filename, package name in `pyproject.toml`, default db name. |
 | **One-line description** | Ask, or infer from context |
 | **Target directory** | Default `~/Projects/<module_name>`. Confirm if it might collide. |
 | **Mongo db name** | Default `<module_name>` |
@@ -50,7 +50,7 @@ If the target directory already exists and is non-empty, this is not a scaffold 
   templates/              # base.html (SEO meta/OG) + _navbar.html + _footer.html + index.html + error.html
   static/                 # css/theme.css  js/app.js  img/
   plans/                  # .gitkeep
-  requirements.txt  .env.example  .gitignore  README.md  CLAUDE.md
+  pyproject.toml  .python-version  .env.example  .gitignore  README.md  CLAUDE.md
 ```
 
 The authoritative source for every one of these files is `assets/` in this skill. If you need to see exactly what will be written, read the files under `assets/` — do not reproduce them from memory.
@@ -75,16 +75,15 @@ After it runs, confirm there are no leftover `__…__` tokens:
 grep -rn "__PROJECT_NAME__\|__MODULE_NAME__\|__DB_NAME__\|__DESCRIPTION__" "<target>" || echo "clean"
 ```
 
-## Step 3: Create the venv, install, and verify it runs
+## Step 3: Sync dependencies and verify it runs
 
 ```bash
-python3 -m venv /Users/amirinns/PythonEnv/<module_name>
-/Users/amirinns/PythonEnv/<module_name>/bin/pip install --upgrade pip
-/Users/amirinns/PythonEnv/<module_name>/bin/pip install -r <target>/requirements.txt
+cd <target>
+uv sync
 ```
 
 Then verify: launch the app in the background from the project directory
-(`/Users/amirinns/PythonEnv/<module_name>/bin/python <module_name>.py`), wait a moment, then
+(`uv run python <module_name>.py`), wait a moment, then
 `curl -s -o /dev/null -w "%{http_code}" http://localhost:5000/health` — expect **200**. Then stop the
 background app.
 
@@ -94,9 +93,9 @@ background app.
 
 Tell the user:
 - Where the project was created and that assets were stamped from the canonical skeleton.
-- That the venv exists at `/Users/amirinns/PythonEnv/<module_name>/` and deps are installed.
+- That dependencies were synced via `uv sync` (`pyproject.toml` + `uv.lock` + `.python-version`).
 - The `/health` smoke-test result (the HTTP code you observed).
-- The run command: `/Users/amirinns/PythonEnv/<module_name>/bin/python <module_name>.py`.
+- The run command: `uv run python <module_name>.py`.
 - That `modules/items.py` + the `items` template are a placeholder example to rename/replace.
 - Offer to `git init` + initial commit if they want (don't do it unprompted).
 

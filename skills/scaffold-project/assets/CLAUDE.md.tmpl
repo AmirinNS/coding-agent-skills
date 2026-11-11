@@ -8,12 +8,14 @@ __DESCRIPTION__
 - **Database:** MongoDB via PyMongo — direct driver calls, **no ORM**
 - **Frontend:** Jinja2 templates + Bootstrap 5 (CDN) + vanilla JS
 
-## Virtual environment (mandatory)
+## Python environment (mandatory)
 
-Never use system python/pip. Always:
+Never use system python/pip or bare virtualenvs. Always use `uv`:
 
-    /Users/amirinns/PythonEnv/__MODULE_NAME__/bin/python <script>
-    /Users/amirinns/PythonEnv/__MODULE_NAME__/bin/pip install <package>
+    uv run python <script>
+    uv add <package>
+    uv run pytest
+    uv run ruff check .
 
 ## Architecture rules
 
@@ -25,7 +27,7 @@ Never use system python/pip. Always:
 - Baseline SEO lives in `base.html` (meta/OG/Twitter/canonical) + `sources/seo.py` (defaults, `canonical_url()`) + `/robots.txt` and `/sitemap.xml` routes. Override per page via `{% block title %}` / `{% block meta_description %}`. JSON-LD and dynamic sitemaps come from the `add-capability` skill (seo).
 - All imports at the top of the file. Never import inside a function.
 - 4-space indentation.
-- If you add a Python dependency, update `requirements.txt` in the same change.
+- If you add a Python dependency, run `uv add <package>` (or `uv add --dev <package>` for dev tools).
 - Stack changes (different framework/DB) require explicit user approval.
 - Use the `python-development` skill when writing or editing Python. It carries the depth these bullets cannot: PEP 8 specifics, error handling at trust boundaries, stdlib choices, and the footguns to check for.
 
@@ -40,9 +42,9 @@ Never use system python/pip. Always:
 The native Flask server is dev/testing only; production is served by waitress (`sources/config.py` sets `IS_PRODUCTION`/`DEBUG`, the entrypoint picks the server). The app and MongoDB are assumed co-located (same host); set `MONGO_URI` per environment in `.env` (testing may point at a remote/shared DB) — never hardcode it.
 
     # development
-    /Users/amirinns/PythonEnv/__MODULE_NAME__/bin/python __MODULE_NAME__.py
+    uv run python __MODULE_NAME__.py
     # production (waitress)
-    APP_ENV=production /Users/amirinns/PythonEnv/__MODULE_NAME__/bin/python __MODULE_NAME__.py
+    APP_ENV=production uv run python __MODULE_NAME__.py
     # http://localhost:5000
 
 ## Plans

@@ -15,7 +15,7 @@ You are migrating an **existing** project toward the user's house style. This is
 - **Database:** MongoDB via PyMongo — direct driver calls, **no ORM** (no MongoEngine, no Repository pattern).
 - **Frontend:** Jinja2 templates + Bootstrap 5 + vanilla JS. Pages `{% extends "base.html" %}`; the navbar and footer live in shared, underscore-prefixed partials (`_navbar.html`, `_footer.html`) pulled in with `{% include %}` — no chrome duplicated per page.
 - **Architecture:** Functional. Business logic in `modules/` as pure functions that take `db` explicitly. Shared helpers/config in `sources/`. Templates in `templates/`, assets in `static/`.
-- **Discipline:** imports at top of file (never inside functions); 4-space indent for new/edited code (match a file's existing indent when editing it); dedicated venv at `/Users/amirinns/PythonEnv/<module_name>/`; plans in `plans/`.
+- **Discipline:** imports at top of file (never inside functions); 4-space indent for new/edited code (match a file's existing indent when editing it); environment managed with `uv` (`pyproject.toml` + `uv.lock` + `.python-version` 3.12); plans in `plans/`.
 
 ### Single source of truth (read this before planning)
 
@@ -32,7 +32,7 @@ Match this destination, but see the **Reality check** rule below — do not forc
 
 1. Confirm the working tree is clean (`git status`). If there are uncommitted changes, ask the user to commit or stash first — you need a known-good baseline to revert to.
 2. If the project is not a git repo, offer to `git init` + commit a baseline before touching anything. Do not migrate an unversioned project without the user's explicit OK.
-3. Confirm the project's dedicated venv path. Default `/Users/amirinns/PythonEnv/<module_name>/`. If it doesn't exist yet, note that it'll be needed.
+3. Confirm the Python environment. Projects use `uv` (`pyproject.toml` + `uv.lock` + `.python-version`). If the project still uses `requirements.txt` or a bare virtualenv, plan the uv migration.
 
 Never begin migration edits until there is a committed baseline you can roll back to.
 
@@ -87,7 +87,17 @@ Flask + Bootstrap 5 + MongoDB (or the subset the user approved). Note anything i
 | Error pages | ... | one themed `error.html` for all codes via `sources/errors.py` (`init_errors`), JSON for `/api`, `noindex` | ... | ... |
 | Import hygiene | ... | top-level only | ... | ... |
 | Layout | ... | modules/ sources/ templates/ static/ | ... | ... |
+| Packaging & env | ... | `uv` (`pyproject.toml` + `uv.lock` + `.python-version`) | ... | ... |
 | Stated conventions | present / absent | `CLAUDE.md` (or `AGENTS.md`) documenting stack, conventions, run commands | ... | ... |
+
+### Migrating dependencies to uv
+
+If the project uses `requirements.txt` or bare pip:
+1. Initialize `pyproject.toml` and `.python-version` (copy from `scaffold-project/assets/` or run `uv init --app --no-package`).
+2. Migrate existing dependencies: `uv add -r requirements.txt`.
+3. Add dev tools: `uv add --dev "pytest>=8" "ruff>=0.6"`.
+4. Delete `requirements.txt`.
+5. Run `uv sync` to generate `uv.lock`.
 
 ## Phases (each independently shippable + verifiable)
 ### Phase 1: <lowest-risk slice, e.g. import hygiene + extract service functions>
@@ -116,7 +126,7 @@ Then present the plan for approval. Recommend running the `plan-review` skill on
 For each approved phase:
 1. Make the surgical edits for that phase only. Don't "improve" adjacent code (per CLAUDE.md guideline 4).
 2. Keep the app runnable — never leave it broken between phases.
-3. **Verify:** run the app (`/Users/amirinns/PythonEnv/<module_name>/bin/python <entrypoint>`), hit the affected routes, run existing tests. Confirm behavior is unchanged.
+3. **Verify:** run the app (`uv run python <entrypoint>`), hit the affected routes, run existing tests (`uv run pytest`). Confirm behavior is unchanged.
 4. Commit the phase with a conventional message before starting the next.
 5. Recommend the `implementation-review` skill after a non-trivial phase.
 
@@ -129,7 +139,7 @@ Skip this entirely if the project already has a `CLAUDE.md` or `AGENTS.md`. Neve
 Do this **after the last phase is committed**, not earlier. The migration changes the stack, layout, and run commands, so a file written during assessment would document the state you just migrated away from.
 
 1. Copy `CLAUDE-template.md` from the root of this skills repo (sibling to `skills/`) to `<project>/CLAUDE.md`. Use `AGENTS.md` instead if the project's other agents look for that name.
-2. Fill it in from what the migration actually produced, not from the plan's intent. Read the final tree and the real commands before writing each section: Stack, Critical Setup (the venv path confirmed in Step 0), Running Tests, Common Commands, Architecture, Important File Locations.
+2. Fill it in from what the migration actually produced, not from the plan's intent. Read the final tree and the real commands before writing each section: Stack, Critical Setup (`uv sync`), Running Tests (`uv run pytest`), Common Commands (`uv run python <entrypoint>`), Architecture, Important File Locations.
 3. In **Language Conventions**, keep the Python block and delete the others. Add anything this project does differently from house style that the user chose to keep, so the next agent doesn't "fix" it.
 4. In **Key Patterns**, record the deviations from house style listed under the plan's **Out of scope**, with the reason. That is the section which stops a future agent from re-opening a decision the user already made.
 5. Leave a section's placeholder comments in place rather than inventing content for it. An honest gap beats a confident wrong answer.

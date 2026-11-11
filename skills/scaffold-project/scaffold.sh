@@ -31,11 +31,13 @@ mkdir -p "$TARGET"
 cp -R "$ASSETS/." "$TARGET/"
 
 # Rename placeholder-named files to their real names.
-mv "$TARGET/entrypoint.py"  "$TARGET/${MODULE_NAME}.py"
-mv "$TARGET/gitignore"      "$TARGET/.gitignore"
-mv "$TARGET/env.example"    "$TARGET/.env.example"
-mv "$TARGET/README.md.tmpl" "$TARGET/README.md"
-mv "$TARGET/CLAUDE.md.tmpl" "$TARGET/CLAUDE.md"
+mv "$TARGET/entrypoint.py"       "$TARGET/${MODULE_NAME}.py"
+mv "$TARGET/gitignore"           "$TARGET/.gitignore"
+mv "$TARGET/python-version"      "$TARGET/.python-version"
+mv "$TARGET/env.example"         "$TARGET/.env.example"
+mv "$TARGET/README.md.tmpl"      "$TARGET/README.md"
+mv "$TARGET/CLAUDE.md.tmpl"      "$TARGET/CLAUDE.md"
+mv "$TARGET/pyproject.toml.tmpl" "$TARGET/pyproject.toml"
 
 mkdir -p "$TARGET/plans" "$TARGET/static/img"
 touch "$TARGET/plans/.gitkeep" "$TARGET/static/img/.gitkeep"
@@ -52,8 +54,8 @@ subs = {
     "__DB_NAME__": os.environ["DB_NAME"],
     "__DESCRIPTION__": os.environ["DESCRIPTION"],
 }
-text_names = (".env.example", ".gitignore", ".gitkeep")
-text_exts = (".py", ".html", ".css", ".js", ".md", ".txt", ".example")
+text_names = (".env.example", ".gitignore", ".gitkeep", ".python-version")
+text_exts = (".py", ".html", ".css", ".js", ".md", ".txt", ".example", ".toml")
 for root, _, files in os.walk(target):
     for fn in files:
         if not (fn.endswith(text_exts) or fn in text_names):
@@ -65,7 +67,11 @@ for root, _, files in os.walk(target):
         except (UnicodeDecodeError, IsADirectoryError):
             continue
         updated = original
+        # .toml and .py embed the description inside double-quoted strings.
+        needs_escape = fn.endswith((".toml", ".py"))
         for token, value in subs.items():
+            if needs_escape and token == "__DESCRIPTION__":
+                value = value.replace("\\", "\\\\").replace('"', '\\"')
             updated = updated.replace(token, value)
         if updated != original:
             with open(path, "w", encoding="utf-8") as f:

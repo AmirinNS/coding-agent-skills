@@ -3,7 +3,7 @@
 # Flask's default page.
 import logging
 
-from flask import render_template, request, jsonify, make_response
+from flask import jsonify, make_response, render_template, request
 from werkzeug.exceptions import default_exceptions
 
 log = logging.getLogger(__name__)
@@ -44,9 +44,10 @@ def _render_error(error):
         # Last-resort fallback if template/context rendering itself fails
         # (e.g. DB unreachable during a 500). Keep it dependency-free.
         log.exception("error page render failed")
-        html = ("<!doctype html><meta charset=utf-8><title>%d</title>"
-                "<h1>%d — %s</h1><p>%s</p><p><a href='/'>Go home</a></p>"
-                % (code, code, heading, message))
+        html = (
+            f"<!doctype html><meta charset=utf-8><title>{code}</title>"
+            f"<h1>{code} — {heading}</h1><p>{message}</p><p><a href='/'>Go home</a></p>"
+        )
 
     response = make_response(html, code)
     if code == 429:

@@ -23,11 +23,10 @@ artifact** (PR packet, release notes, "diff between v1 and v2"), not when a quic
 ## How to run
 
 Run from **inside the target git repository** (the script exits if not in a repo,
-and reports paths relative to that repo root). Any `python3` works — no venv or
-install step needed.
+and reports paths relative to that repo root). Run via `uv`:
 
 ```bash
-python3 <path-to>/git_diff.py <old-commit> [<new-commit>] [options]
+uv run python <path-to>/git_diff.py <old-commit> [<new-commit>] [options]
 ```
 
 - `<old-commit>` is required; `<new-commit>` defaults to `HEAD`.
@@ -61,16 +60,16 @@ Tree legend: `[+]` added, `[-]` deleted, `[~]` modified, `[→]` renamed.
 
 ```bash
 # Compact report (default) from a commit to HEAD — token-efficient, for an LLM
-python3 git_diff.py 6d9983c
+uv run python git_diff.py 6d9983c
 
 # Verbose human-readable report between two tags, saved as a changelog artifact
-python3 git_diff.py v1.2.0 v1.3.0 --full -o CHANGES_v1.3.0.txt
+uv run python git_diff.py v1.2.0 v1.3.0 --full -o CHANGES_v1.3.0.txt
 
 # Quick "what files changed" list only
-python3 git_diff.py HEAD~5 -n
+uv run python git_diff.py HEAD~5 -n
 
 # Compact, but tighten the truncation cap for a very large range
-python3 git_diff.py main feature-x --max-lines 200
+uv run python git_diff.py main feature-x --max-lines 200
 ```
 
 ## Notes for the agent

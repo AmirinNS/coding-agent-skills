@@ -1,15 +1,15 @@
 # Standard library
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 # Third-party
-from flask import Flask, render_template, jsonify, url_for, Response
+from flask import Flask, Response, jsonify, render_template, url_for
 from waitress import serve
 
 # Local
-from sources.config import db, SECRET_KEY, PORT, DEBUG, IS_PRODUCTION, APP_ENV, SITE_URL
+from modules import items
+from sources import seo
+from sources.config import APP_ENV, DEBUG, IS_PRODUCTION, PORT, SECRET_KEY, SITE_URL, db
 from sources.errors import init_errors
-import sources.seo as seo
-import modules.items as items
 
 app = Flask(__name__)
 app.secret_key = SECRET_KEY
@@ -19,7 +19,7 @@ init_errors(app)   # themed error pages for every HTTP status
 @app.context_processor
 def inject_globals():
     # Available in every template (footer year + baseline SEO meta).
-    ctx = {"current_year": datetime.now(timezone.utc).year}
+    ctx = {"current_year": datetime.now(UTC).year}
     ctx.update(seo.default_meta())
     return ctx
 
@@ -52,7 +52,7 @@ def sitemap_xml():
     body = (
         '<?xml version="1.0" encoding="UTF-8"?>'
         '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
-        + "".join("<url><loc>{}</loc></url>".format(u) for u in urls)
+        + "".join(f"<url><loc>{u}</loc></url>" for u in urls)
         + "</urlset>"
     )
     return Response(body, mimetype="application/xml")

@@ -14,9 +14,9 @@ Don't build subscription lifecycle handling if the project only needs a one-time
 
 ## Step 1: Dependencies & env
 
-`requirements.txt` (the `.v1` namespace needs a recent major; prefer the latest):
-```
-stripe>=12.0.0
+Add dependencies (the `.v1` namespace needs a recent major; prefer the latest):
+```bash
+uv add "stripe>=12.0.0"
 ```
 
 `.env.example`:

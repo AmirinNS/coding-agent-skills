@@ -30,21 +30,13 @@ known URL (`web-fetch` covers that).
 ## Setup
 
 The script drives real Google Chrome through Playwright's `channel="chrome"`,
-so two things must exist: Playwright for the interpreter you run, and Google
+so two things must exist: Playwright (provided on demand via `uv run --with playwright`) and Google
 Chrome itself.
 
-On a machine that already has a Playwright environment, use its Python
-directly:
+Run directly via `uv`:
 
 ```bash
-python3 <skill-dir>/scripts/web_browse.py "QUERY"
-```
-
-Otherwise create one next to the skill:
-
-```bash
-python3 -m venv <skill-dir>/.venv
-<skill-dir>/.venv/bin/pip install playwright
+uv run --with playwright python <skill-dir>/scripts/web_browse.py "QUERY"
 ```
 
 No `playwright install` step is needed for the `chrome` channel; it uses the
@@ -54,7 +46,7 @@ fails with a launch error in the envelope instead of fake results.
 ## How to run
 
 ```bash
-<skill-dir>/.venv/bin/python scripts/web_browse.py "QUERY" [more queries] --max 5 --headless
+uv run --with playwright python scripts/web_browse.py "QUERY" [more queries] --max 5 --headless
 ```
 
 - Multiple queries are searched in turn, per engine, and **deduped by URL**
@@ -115,4 +107,4 @@ The envelope is `{"keywords": [...], "engines": [...], "count": N,
   human delays. Keep `--max` reasonable and don't hammer engines you don't
   need.
 - Runnable check for the pure logic (no browser needed):
-  `python3 <skill-dir>/tests/test_web_browse.py`.
+  `uv run python <skill-dir>/tests/test_web_browse.py`.

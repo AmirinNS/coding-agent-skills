@@ -12,9 +12,9 @@ House-style discipline: functional, helper in `sources/storage.py`, thin routes,
 
 ## Step 1: Dependencies & env
 
-Add to `requirements.txt`:
-```
-boto3>=1.34.0
+Add dependencies:
+```bash
+uv add "boto3>=1.34.0"
 ```
 
 Add to `.env.example` (Spaces shown; for AWS S3 drop the endpoint and set the real region):

@@ -12,15 +12,13 @@ House-style discipline holds with one sanctioned exception: **flask-login requir
 
 ## Step 1: Dependencies
 
-Add to `requirements.txt` (werkzeug ships with Flask):
+Add dependencies:
 
-```
-Flask-Login>=0.6.0
-Flask-WTF>=1.2.0
-Flask-Limiter>=3.5.0
+```bash
+uv add "Flask-Login>=0.6.0" "Flask-WTF>=1.2.0" "Flask-Limiter>=3.5.0"
 ```
 
-`Flask-WTF` provides CSRF protection; `Flask-Limiter` rate-limits the auth endpoints. Install into the project venv: `/Users/amirinns/PythonEnv/<module_name>/bin/pip install -r requirements.txt`.
+`Flask-WTF` provides CSRF protection; `Flask-Limiter` rate-limits the auth endpoints. Werkzeug ships with Flask.
 
 ## Step 2: `sources/auth.py` — flask-login wiring
 
