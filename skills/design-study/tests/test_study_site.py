@@ -1,4 +1,4 @@
-"""Runnable check for study_site.py. Run with the isaham venv python; prints ok."""
+"""Runnable check for study_site.py. Run with a Python that has Playwright installed; prints ok."""
 import json
 import re
 import sys

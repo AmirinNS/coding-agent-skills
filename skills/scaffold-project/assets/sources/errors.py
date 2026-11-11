@@ -1,6 +1,6 @@
 # Themed error handling. One template (error.html) serves every HTTP status;
 # API/XHR callers get JSON. Registered for all codes so nothing falls back to
-# Flask's default page. Pattern from isaham-learn's server_setup.py.
+# Flask's default page.
 import logging
 
 from flask import render_template, request, jsonify, make_response

@@ -33,7 +33,7 @@ the user names; never crawl a whole site. Then ask once, unless the user already
 **Live URL.** From the project root:
 
 ```bash
-/Users/amirinns/PythonEnv/isaham/bin/python <skill-dir>/scripts/study_site.py <url> [<url> ...] --out design/study
+python3 <skill-dir>/scripts/study_site.py <url> [<url> ...] --out design/study
 ```
 
 For each URL it writes `design/study/<slug>/390.png`, `1440.png` and `tokens.json` (CSS custom

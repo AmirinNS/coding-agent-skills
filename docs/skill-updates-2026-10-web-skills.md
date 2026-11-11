@@ -56,8 +56,8 @@ python3 skills/web-fetch/scripts/web_fetch.py https://example.com/one https://ex
 
 ### Web browse
 ```bash
-/Users/amirinns/PythonEnv/isaham/bin/python skills/web-browse/scripts/web_browse.py "duckdb parquet performance" --headless
-/Users/amirinns/PythonEnv/isaham/bin/python skills/web-browse/scripts/web_browse.py "topic" --engine all --max 10
+python3 skills/web-browse/scripts/web_browse.py "duckdb parquet performance" --headless
+python3 skills/web-browse/scripts/web_browse.py "topic" --engine all --max 10
 ```
 
 ### Web download
@@ -71,7 +71,7 @@ Runnable checks for each skill script:
 ```bash
 python3 skills/web-search/tests/test_web_search.py
 python3 skills/web-fetch/tests/test_web_fetch.py
-/Users/amirinns/PythonEnv/isaham/bin/python skills/web-browse/tests/test_web_browse.py
+python3 skills/web-browse/tests/test_web_browse.py
 python3 skills/web-download/tests/test_web_download.py
 ```
 

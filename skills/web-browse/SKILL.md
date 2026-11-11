@@ -33,11 +33,11 @@ The script drives real Google Chrome through Playwright's `channel="chrome"`,
 so two things must exist: Playwright for the interpreter you run, and Google
 Chrome itself.
 
-On a machine that already has a Playwright environment (this one does), use it
+On a machine that already has a Playwright environment, use its Python
 directly:
 
 ```bash
-/Users/amirinns/PythonEnv/isaham/bin/python <skill-dir>/scripts/web_browse.py "QUERY"
+python3 <skill-dir>/scripts/web_browse.py "QUERY"
 ```
 
 Otherwise create one next to the skill:

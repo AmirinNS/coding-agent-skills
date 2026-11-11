@@ -1,7 +1,7 @@
 """Screenshot a live page and tally its computed styles into tokens.json.
 
 Usage:
-    /Users/amirinns/PythonEnv/isaham/bin/python study_site.py URL [URL ...] --out DIR
+    python3 study_site.py URL [URL ...] --out DIR
 
 For each URL, writes DIR/<slug>/390.png, 1440.png and tokens.json.
 """

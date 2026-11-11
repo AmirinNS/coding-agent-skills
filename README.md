@@ -230,7 +230,7 @@ Use `web-browse` to search Brave and Bing by driving the real installed Chrome
 with Playwright: it opens the engine homepage, types the query like a person,
 and reads the results page, so the bot blocks that stop plain HTTP scrapers
 don't fire. No SearXNG, no Docker, no database. Needs Playwright for the
-interpreter (this machine has `/Users/amirinns/PythonEnv/isaham/bin/python`)
+interpreter
 and real Google Chrome. Each query takes 10-50 seconds with human-style dwell.
 `scripts/web_browse.py` prints a JSON envelope on stdout (logs on stderr),
 dedupes by URL across queries and engines, optionally extracts each page's

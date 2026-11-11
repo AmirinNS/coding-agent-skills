@@ -53,11 +53,11 @@ labeled.
 ## Bundled Script
 
 `skills/design-study/scripts/study_site.py` screenshots a live page at 390px and 1440px and
-tallies its computed styles. It needs the isaham venv Python, which has Playwright and its
+tallies its computed styles. It needs a Python with Playwright and its
 bundled Chromium.
 
 ```bash
-/Users/amirinns/PythonEnv/isaham/bin/python <skill-dir>/scripts/study_site.py <url> [<url> ...] --out design/study
+python3 <skill-dir>/scripts/study_site.py <url> [<url> ...] --out design/study
 ```
 
 Run it from the project root. For each URL it writes `design/study/<slug>/390.png`,
@@ -87,7 +87,7 @@ Behavior notes:
 framework:
 
 ```bash
-/Users/amirinns/PythonEnv/isaham/bin/python skills/design-study/tests/test_study_site.py
+python3 skills/design-study/tests/test_study_site.py
 ```
 
 It covers `rgb_to_hex` (opaque, transparent, partial alpha, non-rgb), `tally` (sorting,
@@ -136,7 +136,7 @@ and agy dirs. Those symlinks live outside this repo.
 |----------|--------|------------------------|-----|
 | How the skill measures a live site | Bundled script `study_site.py` | Instructions only, using the agent's browser tool; a JS snippet file pasted into the browser tool | Same output in Claude, Codex, agy and pi, and it can ship with a test |
 | Where study lives | Separate `design-study` skill | A study mode inside `design-critique` | Different requests and triggers; critique's taste and exploration phases don't apply; keeps `design-critique` from growing |
-| Which Python runs the script | isaham venv | recon-tools `.venv`; a new venv | It is the shared venv for this workspace and already has Playwright |
+| Which Python runs the script | shared venv | recon-tools `.venv`; a new venv | It is the shared venv for this workspace and already has Playwright |
 | Browser | Headless bundled Chromium | Real Chrome with a profile, as `site-clone` does | Public pages only; no stealth or login needed |
 | Third-party sources | Structure and traits only | Copy exact tokens from any source | Matches the existing rule against replicas; own products keep exact tokens |
 | Output location | `design/study/<source-slug>/` | `design/<feature>/`; a temp dir | Study is per source, not per feature; it sits next to `prototype-ui`'s `design/` output |

@@ -38,7 +38,7 @@ work can follow. Also bring the restored `design-critique` skill in line with th
    - `slugify("https://Ex.com/a/../b?x=1")` contains only `[a-z0-9-]`.
    - End to end: run `capture(fixture file:// URL, tmp dir)`; assert `390.png` and `1440.png` exist, `tokens.json` has `custom_properties["--brand"] == "#0a7cff"`, and `#0a7cff`, `12px`, `32px`, `8px` and `Georgia, serif` appear in the matching tallies.
    - Prints `ok` on success.
-3. Run `/Users/amirinns/PythonEnv/isaham/bin/python skills/design-study/tests/test_study_site.py` — expect FAIL: `ModuleNotFoundError: No module named 'study_site'`.
+3. Run `python3 skills/design-study/tests/test_study_site.py` — expect FAIL: `ModuleNotFoundError: No module named 'study_site'`.
 4. Create `skills/design-study/scripts/study_site.py` in the house Python style (functional, imports at top, argparse, stdlib plus Playwright):
    - `rgb_to_hex(value)` — opaque `rgb()`/`rgba()` to `#rrggbb`; `None` when alpha is 0; any other value (partial alpha, `oklch()`, `color()`) returned unchanged. Chrome keeps authored `oklch()` colors in computed style, so these must not be dropped.
    - `slugify(url)` — host plus path, lowercased, every run of characters outside `[a-z0-9]` replaced by `-`, trimmed. Keeps output folders inside `--out`.
@@ -54,7 +54,7 @@ work can follow. Also bring the restored `design-critique` skill in line with th
 2. Same file — intro and shared references block pointing at `../frontend-design/references/design-md-template.md`, `design-rules.md` and `domain-audience-playbook.md`, with the same not-installed fallback sentence.
 3. Same file — the flow:
    - **Step 1: Source and ownership.** Ask once whether the source is the user's own product or a third-party reference. Own product: copy exact tokens. Third-party: take structure and traits only (type ratio, spacing scale, radius, density, layout patterns); never the logo, brand colors, brand font or exact screens.
-   - **Step 2: Capture.** Live URL: from the project root, run `/Users/amirinns/PythonEnv/isaham/bin/python <skill-dir>/scripts/study_site.py <url> --out design/study` (the script adds the URL slug folder). Codebase: read theme sources in this order: CSS custom properties, Tailwind config, SCSS/Bootstrap variable overrides, React Native/Expo theme files, then the most-used components. Screenshots: read them directly and mark every value as estimated.
+   - **Step 2: Capture.** Live URL: from the project root, run `python3 <skill-dir>/scripts/study_site.py <url> --out design/study` (the script adds the URL slug folder). Codebase: read theme sources in this order: CSS custom properties, Tailwind config, SCSS/Bootstrap variable overrides, React Native/Expo theme files, then the most-used components. Screenshots: read them directly and mark every value as estimated.
    - **Step 3: Measure.** Turn the tally or theme files into tokens: font families, a type scale (round to the nearest common step and note outliers), color roles (bg, surface, text, muted, accent, positive, negative, danger) chosen by usage, spacing scale snapped to 4/8, radius, shadows, density. Flag inconsistencies (for example seven grays or four radii) as findings, not tokens.
    - **Step 4: Inventory.** List components (buttons, inputs, cards, tables, nav, modals or sheets) one line each, plus layout patterns and the states seen.
    - **Step 5: Sheet and approval.** Write `design/study/<source-slug>/sheet.html`: swatches with hex and role, the type scale rendered, spacing and radius samples, the component list, screenshots side by side. Show it and iterate on the user's reactions.
@@ -88,18 +88,18 @@ work can follow. Also bring the restored `design-critique` skill in line with th
 
 ## Tests
 - Test type: unit plus one end-to-end run against a local fixture.
-- New tests: `skills/design-study/tests/test_study_site.py`, run with `/Users/amirinns/PythonEnv/isaham/bin/python`.
+- New tests: `skills/design-study/tests/test_study_site.py`, run with `python3`.
 - Existing tests to run: none touch these files.
 
 ## Dependencies
-- Playwright for Python 1.53.0 and its Chromium 138, already installed in `/Users/amirinns/PythonEnv/isaham`. A probe on 2026-10-13 launched it headless on a `file://` page, enumerated `--*` custom properties from `getComputedStyle`, and showed `padding` as the shorthand `8px 16px` and an `oklch()` color kept as `oklch(...)`. No new libraries.
+- Playwright for Python 1.53.0 and its Chromium 138, already installed in the shared Python venv. A probe on 2026-10-13 launched it headless on a `file://` page, enumerated `--*` custom properties from `getComputedStyle`, and showed `padding` as the shorthand `8px 16px` and an `oklch()` color kept as `oklch(...)`. No new libraries.
 
 ## Decisions Log
 | Decision | Chosen | Alternatives Considered | Why |
 |----------|--------|------------------------|-----|
 | How the skill measures a live site | Bundled script `study_site.py` (user's pick) | Instructions only, using the agent's browser tool; a JS snippet file pasted into the browser tool | Same output in Claude, Codex, agy and pi, and it can ship with a test |
 | Where study lives | Separate `design-study` skill (user's pick) | A study mode inside `design-critique` | Different requests and triggers; critique's taste and exploration phases don't apply; keeps `design-critique` from growing |
-| Which Python runs the script | isaham venv | recon-tools `.venv`; a new venv | It is the shared venv for this workspace and already has Playwright |
+| Which Python runs the script | shared venv | recon-tools `.venv`; a new venv | It is the shared venv for this workspace and already has Playwright |
 | Browser | Headless bundled Chromium | Real Chrome with a profile, as `site-clone` does | Public pages only; no stealth or login needed |
 | Third-party sources | Structure and traits only | Copy exact tokens from any source | Matches the existing rule against replicas; own products keep exact tokens |
 | Output location | `design/study/<source-slug>/` | `design/<feature>/`; a temp dir | Study is per source, not per feature; it sits next to `prototype-ui`'s `design/` output |
