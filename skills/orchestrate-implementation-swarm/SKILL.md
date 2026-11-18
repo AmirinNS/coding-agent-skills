@@ -165,6 +165,10 @@ After the last phase is reviewed:
    records, and nothing else.
 4. Summarize: phases completed, assignments per agent, escalations and holds, key files,
    review results, and questions answered by you versus the user.
+   Then list every orchestrator intervention: each question with its answer and rationale,
+   marked as answered by you or by the user, and each correction or recovery you made, such
+   as a failed helper run, a malformed report, or a fix applied during review. Write "none"
+   when there were none.
 5. List the review's "Issues Reported (not auto-fixed)" items verbatim and ask whether to fix
    any.
 6. State that nothing was committed and no docs were written. Offer `document-and-commit`;

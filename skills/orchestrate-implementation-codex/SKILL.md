@@ -381,6 +381,10 @@ After the last phase is reviewed:
    Confirm that what is there is the plan's work and nothing else.
 4. Summarize for the user: phases completed, key files touched, review results, and questions
    auto-answered vs escalated.
+   Then list every orchestrator intervention: each question with its answer and rationale,
+   marked as answered by you or by the user, and each correction or recovery you made, such
+   as a failed helper run, a malformed report, or a fix applied during review. Write "none"
+   when there were none.
 5. List the review's **Issues Reported (not auto-fixed)** items verbatim. Tell the user they
    were left unfixed on purpose and ask whether to fix any. If the user says fix, route actual
    bugs to `fix-bug` and the rest to a quick Codex pass.

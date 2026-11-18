@@ -363,6 +363,23 @@ to the user, and wait. Take no further action until the CTO decides.
 
 Record the report and the CTO's eventual decision in `.orchestrate/<slug>/implementation-log.md`.
 
+## Step 6: Finish
+
+After the last phase is reviewed:
+
+1. Run `pi-rpc.sh <slug> stop` and delete `.orchestrate/<slug>/prompt.md`.
+2. Read the full `.orchestrate/<slug>/implementation-log.md`.
+3. Run `git status --porcelain`. Every phase's work is uncommitted, so expect a dirty tree.
+   Confirm that what is there is the plan's work and nothing else.
+4. Summarize for the user: phases completed, key files touched, review results, and questions
+   auto-answered vs escalated.
+   Then list every orchestrator intervention: each question with its answer and rationale,
+   marked as answered by you or by the user, and each correction or recovery you made, such
+   as a failed helper run, a malformed report, or a fix applied during review. Write "none"
+   when there were none.
+5. State plainly that nothing was committed and no docs were written. Offer
+   `document-and-commit` as the next step. Do not run it unless the user asks.
+
 ## Dispatch prompt
 
 Write this to `.orchestrate/<slug>/prompt.md` for `new` on each phase, filling in the

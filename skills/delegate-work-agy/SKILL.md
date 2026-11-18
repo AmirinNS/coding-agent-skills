@@ -198,6 +198,11 @@ tasks. Do not delete requested deliverables.
 Read `git status --porcelain` when Git is available and compare it against the baseline.
 Account for every new change, including handoff records. Leave existing staging untouched.
 Summarize the result, important files or findings, checks actually run, and pending items.
+Then report every orchestrator intervention so the user sees it without opening the logs:
+each question the worker raised with its answer and rationale (Q/A pairs), marked as answered
+by you or by the user; each correction or recovery you made, such as a failed helper run, a
+malformed report, or a defect fixed in review or sent back through resume; and any blocker
+still open. Write "none" when there were none.
 State that changes remain uncommitted. Do not claim completion if required work is blocked.
 
 ## Dispatch prompt

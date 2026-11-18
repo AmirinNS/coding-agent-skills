@@ -128,6 +128,10 @@ until the user decides.
    including the handoff records.
 4. Report per assignment: level, agent and model, escalations, checks actually run, and
    pending items. List anything held or halted, and why.
+   Then list every orchestrator intervention per assignment: each question with its answer
+   and rationale, marked as answered by you or by the user, and each correction or recovery
+   you made, such as a failed helper run, a malformed report, or a fix applied during review.
+   Write "none" when there were none.
 5. State that all changes remain uncommitted.
 
 ## Dispatch prompt
