@@ -23,6 +23,7 @@ coding-agent-skills/
 │   │   └── capabilities/             #   one instruction file per capability
 │   │       ├── auth.md  seo.md  storage.md  i18n.md  payment.md
 │   ├── plan-feature/SKILL.md             # Create implementation plans
+│   ├── grill-with-docs/SKILL.md      # Interview through design decisions and record agreed terms and ADRs
 │   ├── plan-review/SKILL.md          # Review and iterate on plans
 │   ├── implementation-review/SKILL.md # Review code for bugs and flaws
 │   ├── orchestrate-implementation-pi/    # Same loop, implementor is the pi CLI
@@ -200,6 +201,13 @@ flowchart TD
 | **3. Design** | `design-study` / `design-critique` / `prototype-ui` / `frontend-design` / `frontend-bootstrap-evolution` / `python-development` | `frontend-design` builds UI: simple additions directly, big or new UI after an optional `prototype-ui` pass (wireframes and a clickable prototype with a design-decisions table, approved by you). `design-critique` critiques an existing UI for its domain and audience, explores styles with you, and writes `DESIGN.md`, which the other two follow. `design-study` measures an existing site, app or screenshots and writes `DESIGN.md` from it. `python-development` for Python. A phase can need both. Other backend work follows CLAUDE.md guidelines directly |
 | **4. Implementation** | `orchestrate-implementation-claude` (or `orchestrate-implementation-agy` for agy, `orchestrate-implementation-codex` for Codex, `orchestrate-implementation-pi` for pi, `orchestrate-implementation-droid` for droid) → `implementation-review` → `document-and-commit` | Delegate phased implementation to an implementor, then review. The `-claude` variant spawns a fresh sonnet `phase-implementor` subagent per phase, needs no external CLI, and stops at review: it never commits, so the whole run is left uncommitted and you call `document-and-commit` yourself at the end. The `-agy` variant runs the same loop with the Antigravity CLI (agy): one fresh conversation per phase, back-and-forth exchanges through `agy-exec.sh resume`, and stops at review leaving work uncommitted. The `-codex` variant runs the same loop with the Codex CLI: one `codex exec` thread per phase, questions and replies go back and forth through `codex exec resume`, and the `workspace-write` sandbox keeps `.git` read-only so nothing is committed. The pi variant runs the same loop with the pi CLI: one fresh session per phase, back-and-forth exchanges through `pi-rpc.sh resume`, and stops at review leaving work uncommitted. The `-droid` variant runs the same loop with a Droid worker through `droid exec`: one fresh session per phase at autonomy `medium`, back-and-forth exchanges through `droid-exec.sh resume`, drift checks against the Git baseline, and stops at review leaving work uncommitted. For an Expo app, the review runs the app on an emulator with `run-expo-android`. `document-and-commit` combines `create-docs` and `generate-commit` |
 | **5. Maintenance** | `fix-bug` | Reproduce-first bug fixing. Skips phases 1-3 |
+
+## Design interviews
+
+Explicitly invoke `grill-with-docs` to work through a plan or design one round
+of questions at a time. The skill records agreed domain terms in `GLOSSARY.md`
+and offers architecture decision records (ADRs) for significant trade-offs.
+It waits for your confirmation before handing off to implementation.
 
 ## Web search
 
