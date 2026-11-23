@@ -29,6 +29,8 @@ Planning → Review Plan (5x) → [prototype-ui, only for big/new UI] → **Fron
 - `references/design-md-template.md`: the DESIGN.md format
 - `references/image-assets.md`: how to delegate generated images to Codex or agy (read when the design needs them)
 
+Use the optional [UI UX Pro Max lookup](references/ui-ux-pro-max.md) when you need a candidate visual direction or a specific UI pattern. The approved prototype, `DESIGN.md`, and the project's components govern implementation.
+
 ## Step 1: Context
 
 1. Read the approved plan in `plans/`: goal, scope, affected files.
